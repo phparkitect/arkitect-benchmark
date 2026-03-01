@@ -21,12 +21,12 @@ bash update-readme.sh  # update this README with the latest results
 ## Benchmark results
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-03-01T20:51:11Z — Symfony v7.2.0 — PHP 8.4.18 — 3 runs per version_
+_Run: 2026-03-01T21:13:59Z — Symfony v7.2.0 — PHP 8.3.30 — 3 runs per version_
 
 | Version | Min (ms) | Median (ms) | Max (ms) |
 |---------|----------|-------------|----------|
-| 0.8.0 | 28814 | 30754 | 32204 |
-| 0.7.0 | 30229 | 31047 | 35622 |
-| 0.6.0 | 31091 | 33674 | 36463 |
-| main | 35003 | 37354 | 37749 |
+| 0.8.0 | 26240 | 26344 | 26443 |
+| 0.7.0 | 25986 | 26068 | 26115 |
+| 0.6.0 | 24121 | 24259 | 24296 |
+| main | 28005 | 28082 | 28418 |
 <!-- BENCHMARK_RESULTS_END -->
