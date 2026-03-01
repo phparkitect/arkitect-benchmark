@@ -22,7 +22,7 @@ The benchmark:
 2. Fetches the 3 latest stable phparkitect releases + `main`
 3. Runs `phparkitect check` N times per version and records median and spread
 
-Results are updated automatically on every CI run.
+Results are updated automatically every day when new commits are pushed to `phparkitect/arkitect` main.
 
 ## Running locally
 
