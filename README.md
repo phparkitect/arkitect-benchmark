@@ -20,7 +20,7 @@ _Run: 2026-03-01T21:13:59Z — Symfony v7.2.0 — PHP 8.3.30 — 3 runs per vers
 The benchmark:
 1. Clones `symfony/symfony` at a pinned tag
 2. Fetches the 3 latest stable phparkitect releases + `main`
-3. Runs `phparkitect check` N times per version and records min / median / max
+3. Runs `phparkitect check` N times per version and records median and spread
 
 Results are updated automatically on every CI run.
 
