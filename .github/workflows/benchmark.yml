@@ -3,8 +3,8 @@ name: phparkitect Benchmark
 on:
   workflow_dispatch:
   schedule:
-    # Every Monday at 00:00 UTC
-    - cron: '0 0 * * 1'
+    # Every day at 00:00 UTC
+    - cron: '0 0 * * *'
 
 jobs:
   benchmark:
@@ -17,7 +17,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check phparkitect/arkitect main SHA
+        id: sha_check
+        run: |
+          current=$(curl -sf "https://api.github.com/repos/phparkitect/arkitect/commits/main" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | jq -r '.sha')
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          stored=$(cat .phparkitect-sha 2>/dev/null || echo "")
+          if [[ "$current" == "$stored" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Setup PHP 8.3
+        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -25,20 +39,25 @@ jobs:
           coverage: none
 
       - name: Run benchmark
+        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: bash run.sh
 
       - name: Update README
+        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: bash update-readme.sh
 
-      - name: Commit README update
+      - name: Commit results
+        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         run: |
+          echo "${{ steps.sha_check.outputs.current }}" > .phparkitect-sha
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md
+          git add README.md .phparkitect-sha
           git diff --cached --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git push
 
       - name: Upload results
+        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results-${{ github.run_id }}
