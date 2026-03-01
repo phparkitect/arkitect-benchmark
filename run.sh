@@ -6,7 +6,7 @@ SYMFONY_VERSION="v7.2.0"
 SYMFONY_DIR="./symfony"
 VERSIONS_DIR="./phparkitect-versions"
 RESULTS_DIR="./results"
-RUNS="${RUNS:-3}"
+RUNS="${RUNS:-5}"
 GITHUB_API="https://api.github.com/repos/phparkitect/arkitect/releases"
 ARKITECT_CONFIG="$(pwd)/arkitect.php"
 
