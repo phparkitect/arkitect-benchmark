@@ -22,17 +22,16 @@ runs_per_version=$(jq -r '.runs_per_version' "$latest")
 # Build the markdown block
 new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per version_
 
-| Version | Min (ms) | Median (ms) | Max (ms) |
-|---------|----------|-------------|----------|"
+| Version | Median (s) | Spread |
+|---------|------------|--------|"
 
 while IFS= read -r row; do
     version=$(echo "$row" | jq -r '.phparkitect_version')
-    min=$(echo "$row" | jq -r '.min_ms')
-    median=$(echo "$row" | jq -r '.median_ms')
-    max=$(echo "$row" | jq -r '.max_ms')
+    median_s=$(echo "$row" | jq -r '.median_s')
+    spread_s=$(echo "$row" | jq -r '.spread_s')
     new_block+="
-| ${version} | ${min} | ${median} | ${max} |"
-done < <(jq -c '.results[]' "$latest")
+| ${version} | ${median_s} | ± ${spread_s} |"
+done < <(jq -c '[(.results[] | select(.phparkitect_version == "main")), (.results[] | select(.phparkitect_version != "main"))][]' "$latest")
 
 # Replace content between markers in README
 awk -v block="$new_block" '

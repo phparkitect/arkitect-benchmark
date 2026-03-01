@@ -135,16 +135,18 @@ benchmark_version() {
         echo "    run ${i}: ${elapsed} ms" >&2
     done
 
-    local min max med
+    local min max med median_s spread_s
     min=$(array_min "${runs_ms[@]}")
     max=$(array_max "${runs_ms[@]}")
     med=$(median "${runs_ms[@]}")
+    median_s=$(awk "BEGIN {printf \"%.2f\", $med / 1000}")
+    spread_s=$(awk "BEGIN {printf \"%.2f\", ($max - $min) / 2000}")
 
     # Emit JSON fragment (collected by caller via substitution)
-    printf '{"phparkitect_version":"%s","runs_ms":[%s],"min_ms":%d,"max_ms":%d,"median_ms":%d}' \
+    printf '{"phparkitect_version":"%s","runs_ms":[%s],"min_ms":%d,"max_ms":%d,"median_ms":%d,"median_s":"%s","spread_s":"%s"}' \
         "$version" \
         "$(IFS=,; echo "${runs_ms[*]}")" \
-        "$min" "$max" "$med"
+        "$min" "$max" "$med" "$median_s" "$spread_s"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
