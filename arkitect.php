@@ -38,5 +38,13 @@ return static function (Config $config): void {
         ))
         ->because('EventDispatcher should stay decoupled from persistence and templating layers');
 
+    // Rule 4: Classes in DependencyInjection do not depend on HTTP layer
+    $rules[] = Rule::allClasses()
+        ->that(new ResideInOneOfTheseNamespaces('Symfony\Component\DependencyInjection'))
+        ->should(new NotDependsOnTheseNamespaces(
+            ['Symfony\Component\HttpFoundation', 'Symfony\Component\HttpKernel']
+        ))
+        ->because('DependencyInjection should not depend on the HTTP layer');
+
     $config->add($classSet, ...$rules);
 };
