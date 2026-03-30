@@ -5,14 +5,14 @@ Benchmark comparing performance across phparkitect versions using the [Symfony](
 ## Benchmark results
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-03-29T02:25:00Z — Symfony v7.2.0 — PHP 8.3.30 — 5 runs per version_
+_Run: 2026-03-30T02:27:39Z — Symfony v7.2.0 — PHP 8.3.30 — 5 runs per version_
 
 | Version | Median (s) | Spread |
 |---------|------------|--------|
-| main | 30.64 | ± 0.94 |
-| 0.8.0 | 28.83 | ± 0.57 |
-| 0.7.0 | 28.84 | ± 0.49 |
-| 0.6.0 | 26.95 | ± 0.29 |
+| main | 29.08 | ± 0.58 |
+| 0.8.0 | 27.66 | ± 0.35 |
+| 0.7.0 | 27.26 | ± 0.36 |
+| 0.6.0 | 25.59 | ± 0.46 |
 <!-- BENCHMARK_RESULTS_END -->
 
 ## How it works
