@@ -26,13 +26,14 @@ baseline_median=$(jq -r '[.results[] | select(.phparkitect_version != "main")] |
 # Build the markdown block
 new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per version_
 
-| Version | Median (s) | vs ${baseline_version} | Spread |
-|---------|------------|------------------------|--------|"
+| Version | Median (s) | vs ${baseline_version} |
+|---------|------------|------------------------|"
 
 while IFS= read -r row; do
     version=$(echo "$row" | jq -r '.phparkitect_version')
-    median_s=$(echo "$row" | jq -r '.median_s')
-    spread_s=$(echo "$row" | jq -r '.spread_s')
+    median_s=$(echo "$row" | jq -r '.median_s | tonumber')
+
+    median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
     if [[ "$version" == "$baseline_version" ]]; then
         ratio="baseline"
@@ -45,7 +46,7 @@ while IFS= read -r row; do
     fi
 
     new_block+="
-| ${version} | ${median_s} | ${ratio} | ± ${spread_s} |"
+| ${version} | ${median_rounded} | ${ratio} |"
 done < <(jq -c '[(.results[] | select(.phparkitect_version == "main")), (.results[] | select(.phparkitect_version != "main"))][]' "$latest")
 
 # Replace content between markers in README

@@ -117,7 +117,7 @@ benchmark_version() {
     median_ms=$(awk "BEGIN {printf \"%d\", $median_raw * 1000}")
     min_ms=$(awk "BEGIN {printf \"%d\", $min_raw * 1000}")
     max_ms=$(awk "BEGIN {printf \"%d\", $max_raw * 1000}")
-    median_s=$(awk "BEGIN {printf \"%.2f\", $median_raw}")
+    median_s=$(awk "BEGIN {printf \"%.1f\", $median_raw}")
     stddev_s=$(awk "BEGIN {printf \"%.2f\", $stddev_raw}")
 
     rm -f "$hf_json"
