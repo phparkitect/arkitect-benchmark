@@ -6,14 +6,14 @@ SYMFONY_VERSION="v7.2.0"
 SYMFONY_DIR="./symfony"
 VERSIONS_DIR="./phparkitect-versions"
 RESULTS_DIR="./results"
-RUNS="${RUNS:-5}"
+RUNS="${RUNS:-15}"
 GITHUB_API="https://api.github.com/repos/phparkitect/arkitect/releases"
 ARKITECT_CONFIG="$(pwd)/arkitect.php"
 
 # ─── Dependency check ─────────────────────────────────────────────────────────
 check_deps() {
     local missing=()
-    for cmd in php composer git curl jq; do
+    for cmd in php composer git curl jq hyperfine; do
         if ! command -v "$cmd" &>/dev/null; then
             missing+=("$cmd")
         fi
@@ -40,33 +40,6 @@ fetch_releases() {
     echo "→ Fetching latest phparkitect releases..." >&2
     curl -sf "${GITHUB_API}?per_page=10" \
         | jq -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name] | .[0:3] | .[]'
-}
-
-# ─── Median of N numbers ──────────────────────────────────────────────────────
-median() {
-    local arr=("$@")
-    local count=${#arr[@]}
-    # Sort numerically
-    IFS=$'\n' sorted=($(sort -n <<< "${arr[*]}")); unset IFS
-    local mid=$(( count / 2 ))
-    if (( count % 2 == 1 )); then
-        echo "${sorted[$mid]}"
-    else
-        echo $(( (sorted[mid-1] + sorted[mid]) / 2 ))
-    fi
-}
-
-# ─── min / max ────────────────────────────────────────────────────────────────
-array_min() {
-    local min=$1; shift
-    for v in "$@"; do (( v < min )) && min=$v; done
-    echo "$min"
-}
-
-array_max() {
-    local max=$1; shift
-    for v in "$@"; do (( v > max )) && max=$v; done
-    echo "$max"
 }
 
 # ─── Setup composer.json for a version ───────────────────────────────────────
@@ -119,34 +92,42 @@ benchmark_version() {
     local version="$1"
     local dir="${VERSIONS_DIR}/${version}"
     local phparkitect_bin="${dir}/vendor/bin/phparkitect"
-    local runs_ms=()
+    local hf_json
+    hf_json=$(mktemp /tmp/hf_XXXXXX.json)
 
-    echo "  → Benchmarking ${version} (${RUNS} runs)..." >&2
+    echo "  → Benchmarking ${version} (warmup: 2, runs: ${RUNS})..." >&2
     export BENCHMARK_SRC_DIR="${SYMFONY_DIR}/src"
 
-    for (( i=1; i<=RUNS; i++ )); do
-        local t_start t_end elapsed
-        t_start=$(date +%s%3N)
-        "$phparkitect_bin" check --config="$ARKITECT_CONFIG" \
-            >/dev/null 2>&1 || true
-        t_end=$(date +%s%3N)
-        elapsed=$(( t_end - t_start ))
-        runs_ms+=("$elapsed")
-        echo "    run ${i}: ${elapsed} ms" >&2
-    done
+    hyperfine \
+        --warmup 2 \
+        --runs "$RUNS" \
+        --ignore-failure \
+        --export-json "$hf_json" \
+        "${phparkitect_bin} check --config=${ARKITECT_CONFIG} >/dev/null 2>&1" \
+        >&2
 
-    local min max med median_s spread_s
-    min=$(array_min "${runs_ms[@]}")
-    max=$(array_max "${runs_ms[@]}")
-    med=$(median "${runs_ms[@]}")
-    median_s=$(awk "BEGIN {printf \"%.2f\", $med / 1000}")
-    spread_s=$(awk "BEGIN {printf \"%.2f\", ($max - $min) / 2000}")
+    local median_raw stddev_raw min_raw max_raw times_ms_json
+    median_raw=$(jq -r '.results[0].median' "$hf_json")
+    stddev_raw=$(jq -r '.results[0].stddev' "$hf_json")
+    min_raw=$(jq -r '.results[0].min' "$hf_json")
+    max_raw=$(jq -r '.results[0].max' "$hf_json")
+    times_ms_json=$(jq -r '[.results[0].times[] | . * 1000 | round] | join(",")' "$hf_json")
+
+    local median_ms min_ms max_ms median_s stddev_s
+    median_ms=$(awk "BEGIN {printf \"%d\", $median_raw * 1000}")
+    min_ms=$(awk "BEGIN {printf \"%d\", $min_raw * 1000}")
+    max_ms=$(awk "BEGIN {printf \"%d\", $max_raw * 1000}")
+    median_s=$(awk "BEGIN {printf \"%.2f\", $median_raw}")
+    stddev_s=$(awk "BEGIN {printf \"%.2f\", $stddev_raw}")
+
+    rm -f "$hf_json"
 
     # Emit JSON fragment (collected by caller via substitution)
+    # spread_s contains stddev (± 1σ)
     printf '{"phparkitect_version":"%s","runs_ms":[%s],"min_ms":%d,"max_ms":%d,"median_ms":%d,"median_s":"%s","spread_s":"%s"}' \
         "$version" \
-        "$(IFS=,; echo "${runs_ms[*]}")" \
-        "$min" "$max" "$med" "$median_s" "$spread_s"
+        "$times_ms_json" \
+        "$min_ms" "$max_ms" "$median_ms" "$median_s" "$stddev_s"
 }
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
