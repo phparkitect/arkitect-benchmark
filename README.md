@@ -7,14 +7,14 @@ Benchmark comparing phparkitect performance across versions and against competit
 ### phparkitect version history
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-04-28T02:49:40Z — Symfony v7.2.0 — PHP 8.3.30 — 15 runs per version_
+_Run: 2026-04-28T05:41:41Z — Symfony v7.2.0 — PHP 8.3.30 — 15 runs per version_
 
 | Version | Median (s) | vs 1.0.0 |
 |---------|------------|------------------------|
-| main | 24.5 | -2.4% |
-| 1.0.0 | 25.1 | baseline |
-| 0.8.0 | 23.7 | -5.6% |
-| 0.7.0 | 23.6 | -6.0% |
+| main | 30.5 | +8.2% |
+| 1.0.0 | 28.2 | baseline |
+| 0.8.0 | 26.8 | -5.0% |
+| 0.7.0 | 27.1 | -3.9% |
 <!-- BENCHMARK_RESULTS_END -->
 
 ### vs competitors
@@ -23,6 +23,12 @@ _Run: 2026-04-28T02:49:40Z — Symfony v7.2.0 — PHP 8.3.30 — 15 runs per ver
 > Rules are best-effort equivalent (3 of 4); the naming-convention rule has no direct phpat counterpart and is omitted.
 
 <!-- COMPETITOR_RESULTS_START -->
+_Run: 2026-04-28T05:41:41Z — Symfony v7.2.0 — PHP 8.3.30 — 15 runs per version_
+
+| Tool | Version | Median (s) | vs phparkitect/main |
+|------|---------|------------|---------------------|
+| phparkitect | main | 30.5 | baseline |
+| phpat | 0.10.20 | 0.1 | -99.7% |
 <!-- COMPETITOR_RESULTS_END -->
 
 ## How it works
