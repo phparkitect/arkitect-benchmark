@@ -53,10 +53,14 @@ When a Symfony upgrade legitimately changes the number, update `EXPECTED_VIOLATI
 
 ## Not yet included
 
-**phpat** runs as a PHPStan extension, so a wall-clock number for it is dominated by
-PHPStan's type inference over the whole codebase rather than by the architecture rules.
-Comparing that figure directly against a standalone tool would overstate the difference.
-The honest measurement is the delta between `phpstan analyse` with and without the
-extension registered; until that is implemented, phpat is left out.
+**phpat** is wired up in `phpat/` and its rules do work — verified at 26 violations on a
+single subdirectory — but PHPStan cannot complete an analysis of this subject. After
+installing PHPUnit and excluding Symfony's deliberately-broken fixtures, two blockers
+remain that cannot be excluded at all: version-conditional classes that are invalid PHP
+against the installed dependencies, which PHPStan loads through the autoloader and which
+kill the process. See [comparison.md](comparison.md) for the full trail.
 
-**Pest arch** has the same caveat with the Pest runtime.
+**Pest arch** runs inside the Pest runtime and has not been attempted.
+
+See [comparison.md](comparison.md) for what the two are strong and weak at, and for the
+two ways a tool in this benchmark can silently do no work at all.

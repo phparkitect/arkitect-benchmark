@@ -1,0 +1,108 @@
+# The delta against phpstan-without-phpat.neon is the cost of the architecture
+# rules; the rest is PHPStan analysing the codebase. Both files must stay
+# identical apart from the phpat include and service.
+includes:
+    - vendor/phpat/phpat/extension.neon
+
+parameters:
+    level: 0
+    bootstrapFiles:
+        - vendor/autoload.php
+        # phpat resolves dependencies through PHPStan's reflection, so the
+        # analysed project's own autoloader has to be available or the target
+        # classes are simply invisible to the rules.
+        - ../../symfony/vendor/autoload.php
+    paths:
+        - ../../symfony/src
+    excludePaths:
+        analyseAndScan:
+        # PHPStan refuses to complete the analysis on these; the other tools
+        # report the broken file and carry on. See ../README.md.
+            - ../../symfony/src/Symfony/Component/Config/Tests/Fixtures/ParseError.php
+            - ../../symfony/src/Symfony/Component/VarDumper/Tests/Caster/ReflectionCasterTest.php
+            - ../../symfony/src/Symfony/Component/VarDumper/Tests/Fixtures/NotLoadableClass.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/Legacy/CommandForV9.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/TextUI/Command.php
+            - ../../symfony/src/Symfony/Bundle/FrameworkBundle/Tests/Fixtures/Validation/Article.php
+            - ../../symfony/src/Symfony/Bundle/FrameworkBundle/Tests/Kernel/SimpleKernel.php
+            - ../../symfony/src/Symfony/Component/Cache/Adapter/RedisAdapter.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/RedisCluster6Proxy.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/RelayProxy.php
+            - ../../symfony/src/Symfony/Component/Config/Tests/Fixtures/BadParent.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Compiler/AutowirePassTest.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Dumper/PreloaderTest.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/ParentNotExists.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Loader/FileLoaderTest.php
+            - ../../symfony/src/Symfony/Component/Emoji/Tests/EmojiTransliteratorTest.php
+            - ../../symfony/src/Symfony/Component/ErrorHandler/Tests/DebugClassLoaderTest.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpResolverV4.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Response/AmpResponseV4.php
+            - ../../symfony/src/Symfony/Component/Runtime/Internal/ComposerPlugin.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Statement.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/Legacy/CommandForV7.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Traits/RedisProxiesTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/RedisCluster5Proxy.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/RedisProxy.php
+            - ../../symfony/src/Symfony/Component/Config/Tests/Resource/ClassExistenceResourceTest.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Compiler/OptionalServiceClass.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/Preload/DummyWithInterface.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/Prototype/BadClasses/MissingParent.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/php/services_inline_requires.php
+            - ../../symfony/src/Symfony/Component/Emoji/EmojiTransliterator.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpBodyV4.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/Tests/DeprecationErrorHandler/DeprecationTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Adapter/RelayAdapterTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Traits/RedisTraitTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/RedisClusterProxy.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Compiler/RegisterAutoconfigureAttributesPassTest.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/includes/autowiring_classes.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Component/String/Slugger/AsciiSlugger.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/CoverageListener.php
+            - ../../symfony/src/Symfony/Bridge/Twig/Extension/EmojiExtension.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Adapter/RedisTagAwareClusterAdapterTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/Redis5Proxy.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Compiler/ResolveBindingsPassTest.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/SymfonyTestsListener.php
+            - ../../symfony/src/Symfony/Bundle/TwigBundle/DependencyInjection/Compiler/ExtensionPass.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Adapter/RedisClusterAdapterTest.php
+            - ../../symfony/src/Symfony/Component/Cache/Traits/Redis6Proxy.php
+            - ../../symfony/src/Symfony/Component/DependencyInjection/Tests/Fixtures/containers/container_inline_requires.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Bridge/PhpUnit/Legacy/SymfonyTestsListenerForV7.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Adapter/RedisAdapterTest.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Component/Intl/Transliterator/EmojiTransliterator.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/Cache/Adapter/RedisTagAwareAdapter.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Component/Lock/Tests/Store/RedisProxyStoreFactoryTest.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/Cache/Tests/Adapter/RedisTagAwareAdapterTest.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Component/Semaphore/Tests/Store/StoreFactoryTest.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+            - ../../symfony/src/Symfony/Bridge/Doctrine/Middleware/Debug/DBAL3/Connection.php
+            - ../../symfony/src/Symfony/Component/HttpClient/Internal/AmpListenerV4.php
+    phpat:
+        ignore_built_in_classes: true
+
+services:
+    -
+        class: ArchitectureTest
+        tags:
+            - phpat.test
