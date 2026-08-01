@@ -1,3 +1,6 @@
 symfony/
 phparkitect-versions/
 results/
+competitors/*/vendor/
+competitors/*/composer.lock
+.deptrac.cache

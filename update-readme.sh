@@ -56,4 +56,30 @@ awk -v block="$new_block" '
   !skip
 ' "$README" > "${README}.tmp" && mv "${README}.tmp" "$README"
 
+# ─── Cross-tool table ────────────────────────────────────────────────────────
+# Separate config from the version history above (see competitors/README.md),
+# so the two tables are not comparable and are rendered apart.
+violations=$(jq -r '.competitors[0].violations' "$latest")
+
+competitors_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per tool — 3 shared rules, ${violations} violations found by each_
+
+| Tool | Version | Median (s) |
+|------|---------|------------|"
+
+while IFS= read -r row; do
+    tool=$(echo "$row" | jq -r '.tool')
+    tool_version=$(echo "$row" | jq -r '.version')
+    median_s=$(echo "$row" | jq -r '.median_s | tonumber')
+    median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
+
+    competitors_block+="
+| ${tool} | ${tool_version} | ${median_rounded} |"
+done < <(jq -c '.competitors[]' "$latest")
+
+awk -v block="$competitors_block" '
+  /<!-- COMPETITORS_RESULTS_START -->/ { print; print block; skip=1; next }
+  /<!-- COMPETITORS_RESULTS_END -->/   { skip=0 }
+  !skip
+' "$README" > "${README}.tmp" && mv "${README}.tmp" "$README"
+
 echo "→ README updated."
