@@ -17,8 +17,19 @@ ARKITECT_CONFIG="$(pwd)/arkitect.php"
 # See competitors/README.md.
 COMPETITORS_DIR="./competitors"
 DEPTRAC_DIR="${COMPETITORS_DIR}/deptrac"
+PHPAT_DIR="${COMPETITORS_DIR}/phpat"
 CROSS_TOOL_CONFIG="$(pwd)/competitors/phparkitect/config.php"
-EXPECTED_VIOLATIONS=29
+
+# Cross-tool subject: an application, not a framework monorepo. See
+# competitors/comparison.md for why that distinction decides what can run here.
+AKENEO_VERSION="v2026.3"
+AKENEO_DIR="./akeneo"
+
+# One rule, three tools, three counting models — see competitors/akeneo/RULE.md.
+# These are per-tool on purpose; forcing them to agree would mean weakening one.
+EXPECTED_PHPARKITECT=14
+EXPECTED_PHPAT=20
+EXPECTED_DEPTRAC=32
 
 # ─── Dependency check ─────────────────────────────────────────────────────────
 check_deps() {
@@ -43,6 +54,31 @@ clone_symfony() {
     echo "→ Cloning symfony/symfony@${SYMFONY_VERSION}..."
     git clone --depth=1 --branch "$SYMFONY_VERSION" \
         https://github.com/symfony/symfony.git "$SYMFONY_DIR"
+}
+
+# ─── Clone the cross-tool subject ────────────────────────────────────────────
+# phpat needs the analysed project's autoloader, so this one needs its vendor/
+# installed too — unlike the version-history subject.
+clone_akeneo() {
+    if [[ ! -d "$AKENEO_DIR/.git" ]]; then
+        echo "→ Cloning akeneo/pim-community-dev@${AKENEO_VERSION}..."
+        git clone --depth=1 --branch "$AKENEO_VERSION" \
+            https://github.com/akeneo/pim-community-dev.git "$AKENEO_DIR"
+    else
+        echo "→ Akeneo already cloned, skipping."
+    fi
+
+    if [[ -d "$AKENEO_DIR/vendor" ]]; then
+        echo "→ Akeneo vendor/ already installed, skipping."
+        return
+    fi
+    echo "→ Installing Akeneo dependencies..."
+    # The benchmark never boots the app, it only reads the files, so the
+    # platform requirements of a PIM do not have to be satisfied here.
+    composer install \
+        --working-dir="$AKENEO_DIR" \
+        --no-interaction --no-progress --no-scripts \
+        --ignore-platform-reqs --quiet
 }
 
 # ─── Fetch latest 3 stable releases ──────────────────────────────────────────
@@ -100,16 +136,20 @@ EOF
 # ─── Time one command, emit its stats as JSON object fields ──────────────────
 # spread_s contains stddev (± 1σ)
 measure() {
-    local label="$1" command="$2"
+    local label="$1" command="$2" prepare="${3:-}"
     local hf_json
     hf_json=$(mktemp /tmp/hf_XXXXXX.json)
 
     echo "  → Benchmarking ${label} (warmup: 1, runs: ${RUNS})..." >&2
 
+    local prepare_args=()
+    [[ -n "$prepare" ]] && prepare_args=(--prepare "$prepare")
+
     hyperfine \
         --warmup 1 \
         --runs "$RUNS" \
         --ignore-failure \
+        "${prepare_args[@]}" \
         --export-json "$hf_json" \
         "$command" \
         >&2
@@ -153,12 +193,12 @@ benchmark_version() {
 # A tool that silently runs no rules at all is fast. Assert the work happened
 # before recording any timing for it.
 assert_violations() {
-    local tool="$1" actual="$2"
+    local tool="$1" actual="$2" expected="$3"
 
-    if [[ "$actual" != "$EXPECTED_VIOLATIONS" ]]; then
-        echo "ERROR: ${tool} reported '${actual}' violations, expected ${EXPECTED_VIOLATIONS}." >&2
+    if [[ "$actual" != "$expected" ]]; then
+        echo "ERROR: ${tool} reported '${actual}' violations, expected ${expected}." >&2
         echo "       Refusing to publish a timing for a tool that is not doing the expected work." >&2
-        echo "       If a Symfony upgrade changed this legitimately, update EXPECTED_VIOLATIONS." >&2
+        echo "       If an Akeneo upgrade changed this legitimately, update the EXPECTED_* value." >&2
         exit 1
     fi
     echo "  → ${tool}: ${actual} violations (as expected)" >&2
@@ -166,8 +206,31 @@ assert_violations() {
 
 count_violations_phparkitect() {
     local bin="$1"
-    BENCHMARK_SRC_DIR="${SYMFONY_DIR}/src" "$bin" check --config="$CROSS_TOOL_CONFIG" 2>&1 \
+    CROSS_TOOL_SRC_DIR="${AKENEO_DIR}/src" "$bin" check --config="$CROSS_TOOL_CONFIG" 2>&1 \
         | grep -oP '\d+(?= violations detected)' | head -1
+}
+
+# PHPStan's result cache does not know that phpat's rules live outside the
+# analysed paths, so a stale cache reports zero violations for a rule that has
+# changed. Clear it before counting, and before every timed repetition.
+count_violations_phpat() {
+    "${PHPAT_DIR}/vendor/bin/phpstan" clear-result-cache \
+        -c "${PHPAT_DIR}/phpstan.neon" >/dev/null 2>&1
+    "${PHPAT_DIR}/vendor/bin/phpstan" analyse \
+        -c "${PHPAT_DIR}/phpstan.neon" \
+        --no-progress --memory-limit=-1 --error-format=json 2>/dev/null \
+        | jq -r '[.files[].messages[] | select(.identifier | tostring | test("phpat"))] | length'
+}
+
+setup_phpat() {
+    if [[ -d "${PHPAT_DIR}/vendor" ]]; then
+        echo "  → vendor/ already exists for phpat, skipping composer install." >&2
+        return
+    fi
+    echo "  → Running composer install for phpat..." >&2
+    composer install \
+        --working-dir="$PHPAT_DIR" \
+        --no-interaction --no-progress --quiet
 }
 
 count_violations_deptrac() {
@@ -200,25 +263,39 @@ benchmark_competitors() {
     local ark_version="$1"
     local results=""
 
+    export CROSS_TOOL_SRC_DIR="${AKENEO_DIR}/src"
+
     echo "" >&2
     echo "=== Cross-tool: phparkitect ${ark_version} ===" >&2
     local bin="${VERSIONS_DIR}/${ark_version}/vendor/bin/phparkitect"
-    assert_violations "phparkitect" "$(count_violations_phparkitect "$bin")"
-    export BENCHMARK_SRC_DIR="${SYMFONY_DIR}/src"
+    assert_violations "phparkitect" "$(count_violations_phparkitect "$bin")" "$EXPECTED_PHPARKITECT"
     local stats
     stats=$(measure "phparkitect" "${bin} check --config=${CROSS_TOOL_CONFIG} >/dev/null 2>&1")
-    results+="{\"tool\":\"phparkitect\",\"version\":\"${ark_version}\",\"violations\":${EXPECTED_VIOLATIONS},${stats}}"
+    results+="{\"tool\":\"phparkitect\",\"version\":\"${ark_version}\",\"violations\":${EXPECTED_PHPARKITECT},${stats}}"
 
     echo "" >&2
     echo "=== Cross-tool: deptrac ===" >&2
     setup_deptrac
     local deptrac_version
     deptrac_version=$("${DEPTRAC_DIR}/vendor/bin/deptrac" --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1)
-    assert_violations "deptrac" "$(count_violations_deptrac)"
+    assert_violations "deptrac" "$(count_violations_deptrac)" "$EXPECTED_DEPTRAC"
     # --no-cache: deptrac persists a cache file between processes and phparkitect
     # does not, so without it every run after the first would be timed warm.
     stats=$(measure "deptrac" "${DEPTRAC_DIR}/vendor/bin/deptrac analyse --config-file=${DEPTRAC_DIR}/depfile.yaml --no-cache --no-progress >/dev/null 2>&1")
-    results+=",{\"tool\":\"deptrac\",\"version\":\"${deptrac_version}\",\"violations\":${EXPECTED_VIOLATIONS},${stats}}"
+    results+=",{\"tool\":\"deptrac\",\"version\":\"${deptrac_version}\",\"violations\":${EXPECTED_DEPTRAC},${stats}}"
+
+    echo "" >&2
+    echo "=== Cross-tool: phpat ===" >&2
+    setup_phpat
+    local phpat_version
+    phpat_version=$(composer show --working-dir="$PHPAT_DIR" --format=json phpat/phpat 2>/dev/null \
+        | jq -r '.versions[0]' | sed 's/^v//')
+    assert_violations "phpat" "$(count_violations_phpat)" "$EXPECTED_PHPAT"
+    # Cleared before every repetition, so phpat is timed cold like the others.
+    stats=$(measure "phpat" \
+        "${PHPAT_DIR}/vendor/bin/phpstan analyse -c ${PHPAT_DIR}/phpstan.neon --no-progress --memory-limit=-1 >/dev/null 2>&1" \
+        "${PHPAT_DIR}/vendor/bin/phpstan clear-result-cache -c ${PHPAT_DIR}/phpstan.neon >/dev/null 2>&1")
+    results+=",{\"tool\":\"phpat\",\"version\":\"${phpat_version}\",\"violations\":${EXPECTED_PHPAT},${stats}}"
 
     printf '%s' "$results"
 }
@@ -230,6 +307,7 @@ main() {
     mkdir -p "$VERSIONS_DIR" "$RESULTS_DIR"
 
     clone_symfony
+    clone_akeneo
 
     mapfile -t releases < <(fetch_releases)
     echo "→ Found releases: ${releases[*]}"
@@ -261,6 +339,7 @@ main() {
 {
   "date": "${timestamp}",
   "symfony_version": "${SYMFONY_VERSION}",
+  "akeneo_version": "${AKENEO_VERSION}",
   "php_version": "${php_version}",
   "runs_per_version": ${RUNS},
   "results": [${results_json}],

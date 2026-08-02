@@ -1,0 +1,35 @@
+includes:
+    - vendor/phpat/phpat/extension.neon
+
+parameters:
+    level: 0
+    bootstrapFiles:
+        - vendor/autoload.php
+        # phpat resolves dependencies through PHPStan's reflection, so the
+        # analysed project's own autoloader has to be available or every rule
+        # passes vacuously.
+        - ../../akeneo/vendor/autoload.php
+    paths:
+        - ../../akeneo/src
+    excludePaths:
+        # analyseAndScan, not analyse: these must not be scanned for symbols
+        # either, or PHPStan still reaches them and aborts.
+        analyseAndScan:
+            # requires PHP_CodeSniffer, a dev tool the benchmark does not install
+            - ../../akeneo/src/Akeneo/Connectivity/Connection/back/tests/phpinsights.php
+            # legacy Twig 1 class names
+            - ../../akeneo/src/Akeneo/Platform/Bundle/UIBundle/Twig/Parser/PlaceholderTokenParser.php
+            - ../../akeneo/src/Akeneo/Platform/Bundle/UIBundle/Twig/Node/PlaceholderNode.php
+            # implements AclClassInfo without implementing isVisible(): invalid
+            # PHP on any version, fatal as soon as it is loaded. Its only caller
+            # has to go too, or the autoloader still reaches it.
+            - ../../akeneo/src/Oro/Bundle/SecurityBundle/Metadata/EntitySecurityMetadata.php
+            - ../../akeneo/src/Oro/Bundle/SecurityBundle/Acl/Extension/EntityAclExtension.php
+    phpat:
+        ignore_built_in_classes: true
+
+services:
+    -
+        class: ArchitectureTest
+        tags:
+            - phpat.test

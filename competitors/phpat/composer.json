@@ -4,9 +4,8 @@
         "phpat/phpat": "^0.11"
     },
     "autoload": {
-        "classmap": ["ArchitectureTest.php"]
-    },
-    "require-dev": {
-        "phpunit/phpunit": "^11"
+        "classmap": [
+            "ArchitectureTest.php"
+        ]
     }
 }

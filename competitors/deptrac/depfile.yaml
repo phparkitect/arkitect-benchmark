@@ -1,72 +1,22 @@
+# The cross-tool rule, expressed for deptrac. See ../akeneo/RULE.md.
+#
+# The Domain regex must cross namespace separators: components nest to different
+# depths (Akeneo\Category\Domain but also Akeneo\Pim\Enrichment\Domain), so a
+# single-segment pattern silently selects almost nothing.
 deptrac:
   paths:
-    - ../../symfony/src
+    - ../../akeneo/src
 
   layers:
-    # Source layers — the ones the rules constrain
-    - name: HttpFoundation
+    - name: Domain
       collectors:
         - type: classLike
-          value: '^Symfony\\Component\\HttpFoundation\\.*'
-    - name: EventDispatcher
+          value: '^Akeneo\\.*\\Domain\\.*'
+    - name: Symfony
       collectors:
         - type: classLike
-          value: '^Symfony\\Component\\EventDispatcher\\.*'
-    - name: DependencyInjection
-      collectors:
-        - type: classLike
-          value: '^Symfony\\Component\\DependencyInjection\\.*'
+          value: '^Symfony\\.*'
 
-    # Target-only layers — never appear as dependers
-    - name: HttpKernel
-      collectors:
-        - type: classLike
-          value: '^Symfony\\Component\\HttpKernel\\.*'
-    - name: Doctrine
-      collectors:
-        - type: classLike
-          value: '^Doctrine\\.*'
-    - name: Twig
-      collectors:
-        - type: classLike
-          value: '^Twig\\.*'
-    - name: Monolog
-      collectors:
-        - type: classLike
-          value: '^Monolog\\.*'
-    - name: PsrLog
-      collectors:
-        - type: classLike
-          value: '^Psr\\Log\\.*'
-
-  # Deptrac's ruleset is an allow-list, while the phparkitect rules are deny-lists.
-  # Every layer not forbidden by the equivalent rule must be listed explicitly,
-  # otherwise deptrac reports dependencies the phparkitect run does not.
   ruleset:
-    # Rule 1: must not depend on Doctrine, Twig, Monolog, Psr\Log
-    HttpFoundation:
-      - EventDispatcher
-      - DependencyInjection
-      - HttpKernel
-    # Rule 3: must not depend on Doctrine, Twig
-    EventDispatcher:
-      - HttpFoundation
-      - DependencyInjection
-      - HttpKernel
-      - Monolog
-      - PsrLog
-    # Rule 4: must not depend on HttpFoundation, HttpKernel
-    DependencyInjection:
-      - EventDispatcher
-      - Doctrine
-      - Twig
-      - Monolog
-      - PsrLog
-    HttpKernel:
-      - HttpFoundation
-      - EventDispatcher
-      - DependencyInjection
-      - Doctrine
-      - Twig
-      - Monolog
-      - PsrLog
+    # Domain may depend on nothing that is modelled here, i.e. not on Symfony
+    Domain: ~

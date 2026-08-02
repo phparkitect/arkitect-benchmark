@@ -1,67 +1,59 @@
 # Cross-tool benchmark
 
 The version-history benchmark in the repository root answers "is phparkitect getting
-slower between releases?". This directory answers a different question: "how does
-phparkitect compare to other architecture-testing tools on the same work?".
+slower between releases?" over the Symfony source. This directory answers a different
+question — "how does phparkitect compare to other architecture-testing tools?" — over a
+different subject, with a different config. The two sets of numbers are not comparable
+and are rendered as separate tables.
 
-The two are kept apart on purpose — they have different configs and are not comparable
-numbers.
+## Subject
 
-## Rule equivalence
+[Akeneo PIM](https://github.com/akeneo/pim-community-dev), pinned, with its `vendor/`
+installed. An application rather than a framework monorepo, deliberately: frameworks
+ship classes that are valid only against one major of an optional dependency
+(`CommandForV9`, `DBAL3\Connection`, `AmpResolverV4`), and a reflection-based analyser
+cannot load them at all. That difference is what decides which tools can run here — see
+[comparison.md](comparison.md).
 
-Timings are only meaningful if every tool is doing the same work, so the cross-tool run
-uses `phparkitect/config.php`, a **subset** of the root `arkitect.php` containing only
-the rules every tool can express:
+Akeneo also has real Domain/Application/Infrastructure layering, so the rule is
+architecturally meaningful rather than a pretext.
 
-| Rule | phparkitect | deptrac |
-|------|-------------|---------|
-| HttpFoundation must not depend on Doctrine, Twig, Monolog, Psr\Log | ✅ | ✅ |
-| EventDispatcher must not depend on Doctrine, Twig | ✅ | ✅ |
-| DependencyInjection must not depend on HttpFoundation, HttpKernel | ✅ | ✅ |
-| Console command classes must be named `*Command` | ✅ | ❌ no equivalent |
+## The rule and the expected counts
 
-Deptrac models dependencies between layers, so it has no counterpart for a naming
-constraint. That rule is excluded from the timed run and reported here instead.
-
-Note also that the two rulesets are written inside-out: phparkitect's
-`NotDependsOnTheseNamespaces` is a deny-list, while deptrac's `ruleset` is an allow-list.
-Expressing the same three rules in `deptrac/depfile.yaml` requires listing every layer
-that is *not* forbidden, plus a rule for `HttpKernel`, which would otherwise be reported
-against layers no phparkitect rule mentions.
+One rule, expressed three times: see [akeneo/RULE.md](akeneo/RULE.md) for the rule, the
+per-tool violation counts, and why they legitimately differ.
 
 ## Cold runs
 
-Deptrac is run with `--no-cache`. It persists a cache file between processes and
-phparkitect has no cross-process cache, so every repetition after the first would
-otherwise be timed warm against a cold competitor. Measured, the difference is currently
-about 1% — within noise — but the flag keeps the comparison from silently drifting if
-that changes.
+Both competitors cache, and phparkitect does not, so both are made to run cold or the
+comparison would time a warm tool against a cold one:
+
+- **deptrac** runs with `--no-cache`. Measured, its cache is currently worth about 1% —
+  within noise — but the flag keeps the comparison from drifting if that changes.
+- **phpat** runs with PHPStan's result cache cleared before *every* repetition. This one
+  is not cosmetic: PHPStan's cache does not know phpat's rules live outside the analysed
+  paths, so a stale cache silently reports **zero** violations for a rule that changed.
 
 ## Correctness guard
 
-Both tools report **29 violations** on Symfony v7.2.0 with these three rules — verified
-by hand when each tool was added.
+`run.sh` re-checks each tool's violation count before recording any timing, against that
+tool's own expected figure, and aborts if it does not match.
 
-`run.sh` re-checks that count before recording any timing and aborts if it does not
-match. A previous attempt to benchmark phpat published a 0.1s result that was really
-PHPUnit starting up with no tests registered; the tool never executed a single rule. A
-timing from a tool that is not doing the work is worse than no timing at all, so the
-count is asserted rather than assumed.
+This is not defensive programming for its own sake. Three separate times while building
+this benchmark, a tool reported a fast, green, completely meaningless result:
 
-When a Symfony upgrade legitimately changes the number, update `EXPECTED_VIOLATIONS` in
-`run.sh` in the same commit that bumps `SYMFONY_VERSION`.
+1. **Not registered.** phpat run under PHPUnit, which has no idea what a phpat rule is:
+   0.1s and a green run.
+2. **Registered but blind.** Correctly wired, but without the analysed project's
+   autoloader every target class is unresolvable and every rule passes.
+3. **Stale result cache.** Correctly wired and resolving, but PHPStan reused cached
+   per-file results: 0 violations where a cleared cache reports 6540.
 
-## Not yet included
+None of the three produces an error. All three produce a number that looks publishable.
 
-**phpat** is wired up in `phpat/` and works on ordinary Symfony code — a component's
-production source analyses cleanly and its rules fire. It cannot analyse *this* subject,
-the whole framework monorepo with tests: version-conditional shims that are invalid PHP
-against the installed dependency versions get loaded through the autoloader and kill the
-process, and they cannot be excluded because they arrive through autoloading rather than
-through `paths`. That is a property of the benchmark's subject, not a verdict on the
-tool. See [comparison.md](comparison.md) for the full trail.
+When an Akeneo upgrade legitimately changes a count, update the matching `EXPECTED_*`
+value in `run.sh` in the same commit that bumps `AKENEO_VERSION`.
+
+## Not included
 
 **Pest arch** runs inside the Pest runtime and has not been attempted.
-
-See [comparison.md](comparison.md) for what the two are strong and weak at, and for the
-two ways a tool in this benchmark can silently do no work at all.

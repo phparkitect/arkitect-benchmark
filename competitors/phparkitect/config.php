@@ -9,40 +9,16 @@ use Arkitect\Expression\ForClasses\ResideInOneOfTheseNamespaces;
 use Arkitect\Rules\Rule;
 
 /*
- * Cross-tool config: only the rules every benchmarked tool can express.
- * The naming rule from ../../arkitect.php is left out because deptrac has no
- * equivalent — see ../README.md for the capability matrix.
+ * The cross-tool rule, expressed for phparkitect. See ../akeneo/RULE.md.
  */
 return static function (Config $config): void {
-    $srcDir = getenv('BENCHMARK_SRC_DIR') ?: __DIR__ . '/../../symfony/src';
+    $srcDir = getenv('CROSS_TOOL_SRC_DIR') ?: __DIR__ . '/../../akeneo/src';
 
-    $classSet = ClassSet::fromDir($srcDir);
-
-    $rules = [];
-
-    // Rule 1: Classes in HttpFoundation do not depend on namespaces outside Symfony
-    $rules[] = Rule::allClasses()
-        ->that(new ResideInOneOfTheseNamespaces('Symfony\Component\HttpFoundation'))
-        ->should(new NotDependsOnTheseNamespaces(
-            ['Doctrine', 'Twig', 'Monolog', 'Psr\Log']
-        ))
-        ->because('HttpFoundation should remain framework-agnostic and not pull in heavy dependencies');
-
-    // Rule 3: Classes in EventDispatcher do not depend on namespaces outside Symfony
-    $rules[] = Rule::allClasses()
-        ->that(new ResideInOneOfTheseNamespaces('Symfony\Component\EventDispatcher'))
-        ->should(new NotDependsOnTheseNamespaces(
-            ['Doctrine', 'Twig']
-        ))
-        ->because('EventDispatcher should stay decoupled from persistence and templating layers');
-
-    // Rule 4: Classes in DependencyInjection do not depend on HTTP layer
-    $rules[] = Rule::allClasses()
-        ->that(new ResideInOneOfTheseNamespaces('Symfony\Component\DependencyInjection'))
-        ->should(new NotDependsOnTheseNamespaces(
-            ['Symfony\Component\HttpFoundation', 'Symfony\Component\HttpKernel']
-        ))
-        ->because('DependencyInjection should not depend on the HTTP layer');
-
-    $config->add($classSet, ...$rules);
+    $config->add(
+        ClassSet::fromDir($srcDir),
+        Rule::allClasses()
+            ->that(new ResideInOneOfTheseNamespaces('Akeneo\*\Domain'))
+            ->should(new NotDependsOnTheseNamespaces(['Symfony']))
+            ->because('the domain layer must not depend on the framework')
+    );
 };

@@ -59,21 +59,22 @@ awk -v block="$new_block" '
 # ─── Cross-tool table ────────────────────────────────────────────────────────
 # Separate config from the version history above (see competitors/README.md),
 # so the two tables are not comparable and are rendered apart.
-violations=$(jq -r '.competitors[0].violations' "$latest")
+akeneo_version=$(jq -r '.akeneo_version // "v2026.3"' "$latest")
 
-competitors_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per tool — 3 shared rules, ${violations} violations found by each_
+competitors_block="_Run: ${date} — Akeneo ${akeneo_version} — PHP ${php_version} — ${runs_per_version} runs per tool — one shared rule_
 
-| Tool | Version | Median (s) |
-|------|---------|------------|"
+| Tool | Version | Median (s) | Violations |
+|------|---------|------------|------------|"
 
 while IFS= read -r row; do
     tool=$(echo "$row" | jq -r '.tool')
     tool_version=$(echo "$row" | jq -r '.version')
+    violations=$(echo "$row" | jq -r '.violations')
     median_s=$(echo "$row" | jq -r '.median_s | tonumber')
     median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
     competitors_block+="
-| ${tool} | ${tool_version} | ${median_rounded} |"
+| ${tool} | ${tool_version} | ${median_rounded} | ${violations} |"
 done < <(jq -c '.competitors[]' "$latest")
 
 awk -v block="$competitors_block" '

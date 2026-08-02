@@ -12,18 +12,23 @@ three rules and should not be read as a general verdict on performance.
 
 ## Measured timings
 
-From CI run 30720544439, 5 repetitions per tool, same machine, same run:
+The cross-tool table has since moved to Akeneo PIM, where all three tools run; the
+figures below are from the earlier Symfony-based runs and are kept because the
+observations that follow were made on them.
+
+From CI run 30720544439 over Symfony, 5 repetitions per tool, same machine, same
+run:
 
 | Tool | Version | Median (s) |
 |------|---------|------------|
 | phparkitect | 1.3.0 | 27.4 |
 | deptrac | 4.7.1 | 31.4 |
 
-Both report 29 violations on the shared three rules. phpat is absent for the
-reasons below, not because it is slow.
+Both reported 29 violations on the three shared rules. phpat could not run on that
+subject at all, for the reasons below.
 
-Absolute seconds are machine-dependent: the same pair measured 13.1s and 18.5s
-on a laptop, a ratio of 1.4× against 1.15× on the CI runner. Only the within-run
+Absolute seconds are machine-dependent: the same pair measured 13.1s and 18.5s on a
+laptop, a ratio of 1.4× against 1.15× on the CI runner. Only the within-run
 comparison means anything.
 
 ## The main dividing line: AST names vs reflection
@@ -206,3 +211,17 @@ Worth recording, since both were hit while building this:
 
 Neither produces an error. Both produce a fast, green, meaningless benchmark —
 which is why `run.sh` asserts the violation count before recording any timing.
+
+## A third way to do nothing silently
+
+Recorded after the subject moved to Akeneo, where phpat does run.
+
+Correctly registered, correctly resolving, analysis completing with no errors — and
+still **0 violations**, for a rule that a cleared cache reports 6540 times. PHPStan's
+result cache keys on the analysed files, and phpat's rules live in a class outside the
+analysed paths, so changing a rule does not invalidate anything.
+
+This is the most dangerous of the three failure modes, because unlike the other two it
+appears *after* everything has been set up correctly, and it comes back every time a
+rule is edited. `run.sh` clears the cache before counting and before every timed
+repetition.
