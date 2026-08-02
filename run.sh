@@ -13,8 +13,7 @@ RUNS="${RUNS:-5}"
 GITHUB_API="https://api.github.com/repos/phparkitect/arkitect/releases"
 ARKITECT_CONFIG="$(pwd)/arkitect.php"
 
-# Cross-tool comparison: a subset of the rules every tool can express.
-# See competitors/README.md.
+# Cross-tool comparison: one rule, three tools. See competitors/README.md.
 COMPETITORS_DIR="./competitors"
 DEPTRAC_DIR="${COMPETITORS_DIR}/deptrac"
 PHPAT_DIR="${COMPETITORS_DIR}/phpat"
@@ -81,11 +80,11 @@ clone_akeneo() {
         --ignore-platform-reqs --quiet
 }
 
-# ─── Fetch latest 3 stable releases ──────────────────────────────────────────
+# ─── Fetch latest 5 stable releases ──────────────────────────────────────────
 fetch_releases() {
     echo "→ Fetching latest phparkitect releases..." >&2
     curl -sf "${GITHUB_API}?per_page=10" \
-        | jq -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name] | .[0:3] | .[]'
+        | jq -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name] | .[0:5] | .[]'
 }
 
 # ─── Setup composer.json for a version ───────────────────────────────────────

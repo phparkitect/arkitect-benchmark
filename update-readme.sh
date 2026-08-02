@@ -25,29 +25,45 @@ baseline_median=$(jq -r '[.results[] | select(.phparkitect_version != "main")] |
 
 # Build the markdown block
 new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per version_
+"
 
-| Version | Median | vs ${baseline_version} |
-|---------|--------|------------------------|"
+# Transposed: versions as columns, so more of them fit on one screen.
+header="|  |"
+sep="|---|"
+row_median="| **Median** |"
+row_ratio="| **vs ${baseline_version}** |"
 
 while IFS= read -r row; do
     version=$(echo "$row" | jq -r '.phparkitect_version')
     median_s=$(echo "$row" | jq -r '.median_s | tonumber')
-
     median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
     if [[ "$version" == "$baseline_version" ]]; then
         ratio="baseline"
     else
+        # Rounded to whole percent, and anything inside the measured run-to-run
+        # noise floor is reported as no difference rather than as a small one.
         ratio=$(awk "BEGIN {
             diff = ($median_s - $baseline_median) / $baseline_median * 100
-            sign = (diff >= 0) ? \"+\" : \"\"
-            printf \"%s%.1f%%\", sign, diff
+            if (diff < 0) adiff = -diff; else adiff = diff
+            if (adiff < 3) { printf \"≈\" }
+            else { sign = (diff >= 0) ? \"+\" : \"-\"; printf \"%s%.0f%%\", sign, adiff }
         }")
     fi
 
-    new_block+="
-| ${version} | ${median_rounded}s | ${ratio} |"
+    header+=" ${version} |"
+    sep+="---|"
+    row_median+=" ${median_rounded}s |"
+    row_ratio+=" ${ratio} |"
 done < <(jq -c '[(.results[] | select(.phparkitect_version == "main")), (.results[] | select(.phparkitect_version != "main"))][]' "$latest")
+
+new_block+="
+${header}
+${sep}
+${row_median}
+${row_ratio}
+
+_≈ means the difference is inside the ±3 percentage point run-to-run noise, i.e. no measurable difference._"
 
 # Replace content between markers in README
 awk -v block="$new_block" '

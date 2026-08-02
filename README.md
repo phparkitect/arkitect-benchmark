@@ -9,20 +9,15 @@ The two use different subjects, different rules and different configs. Their num
 
 ## Version history
 
-phparkitect's three latest releases plus `main`, all timed on the same machine in the same run.
+phparkitect's five latest releases plus `main`, all timed on the same machine in the same run.
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-08-02T11:59:02Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
-
-| Version | Median | vs 1.3.0 |
-|---------|--------|------------------------|
-| main | 27.1s | -0.4% |
-| 1.3.0 | 27.2s | baseline |
-| 1.2.0 | 27.1s | -0.4% |
-| 1.1.1 | 27.2s | +0.0% |
+_Filled in by the next CI run._
 <!-- BENCHMARK_RESULTS_END -->
 
-Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 29.5s across runs. The ratio column cancels most of that, since every version in a run is timed on the same machine, but it still carries a noise floor of roughly ±3 percentage points — a single run showing main a few percent slower is not evidence of a regression, only a trend across several runs is.
+Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 29.5s across different runs. Comparing versions against a baseline measured on the same machine cancels most of that, which is why the second row exists and the first is only there for scale.
+
+Even that comparison has a floor: across 29 runs the same figure scattered by about ±3 percentage points, so anything smaller is reported as `≈` rather than as a number. A single run is never evidence of a regression; a trend across several is.
 
 ## Compared to other tools
 
