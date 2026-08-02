@@ -112,9 +112,27 @@ child process dies. It cannot be excluded, because it does not arrive through
 `paths` — it arrives through the autoloader, which is precisely what phpat needs
 in order to see dependencies at all.
 
-**This is where the attempt ends.** The mechanism that gives phpat its
-reach — real reflection over loaded classes — is the same mechanism that makes it
-unable to analyse a codebase shipping version-conditional classes.
+**This is where the attempt ends** — but the scope of that conclusion needs to be
+stated carefully, because it is narrower than it looks.
+
+phpat is *not* unusable on Symfony code. Pointed at one component's production
+source with its tests excluded — `HttpFoundation`, the arrangement any real
+project would have — the analysis completes cleanly, no fatal errors, and the
+rules produce their 26 violations. What fails is analysing the **entire framework
+monorepo**, every component at once, tests included: a target nobody actually
+analyses, Symfony included, since its own `psalm.xml` excludes every `Tests/`
+directory.
+
+So this is a limitation of *this benchmark's subject choice*, not a verdict on
+phpat's fitness for purpose. The benchmark analyses all of `symfony/src` because
+that is what makes it a heavy, realistic parsing workload for the other two
+tools — and that same property is what puts it out of reach for a reflection-based
+analyser.
+
+The transferable point is narrower and still real: the mechanism that gives phpat
+its reach — real reflection over loaded classes — is the mechanism that makes
+version-conditional shims fatal. A project that vendors such classes and wants
+them analysed will hit this; one that analyses only its own `src/` will not.
 
 The robustness difference is therefore narrower than the first misdiagnosis
 suggested, but real and in the same direction: given a class it cannot resolve or

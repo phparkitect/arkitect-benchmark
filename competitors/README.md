@@ -53,12 +53,13 @@ When a Symfony upgrade legitimately changes the number, update `EXPECTED_VIOLATI
 
 ## Not yet included
 
-**phpat** is wired up in `phpat/` and its rules do work — verified at 26 violations on a
-single subdirectory — but PHPStan cannot complete an analysis of this subject. After
-installing PHPUnit and excluding Symfony's deliberately-broken fixtures, two blockers
-remain that cannot be excluded at all: version-conditional classes that are invalid PHP
-against the installed dependencies, which PHPStan loads through the autoloader and which
-kill the process. See [comparison.md](comparison.md) for the full trail.
+**phpat** is wired up in `phpat/` and works on ordinary Symfony code — a component's
+production source analyses cleanly and its rules fire. It cannot analyse *this* subject,
+the whole framework monorepo with tests: version-conditional shims that are invalid PHP
+against the installed dependency versions get loaded through the autoloader and kill the
+process, and they cannot be excluded because they arrive through autoloading rather than
+through `paths`. That is a property of the benchmark's subject, not a verdict on the
+tool. See [comparison.md](comparison.md) for the full trail.
 
 **Pest arch** runs inside the Pest runtime and has not been attempted.
 
