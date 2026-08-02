@@ -4,4 +4,4 @@ results/
 competitors/*/vendor/
 competitors/*/composer.lock
 .deptrac.cache
-akeneo
+/akeneo
