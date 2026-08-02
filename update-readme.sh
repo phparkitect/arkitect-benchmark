@@ -26,8 +26,8 @@ baseline_median=$(jq -r '[.results[] | select(.phparkitect_version != "main")] |
 # Build the markdown block
 new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per version_
 
-| Version | Median (s) | vs ${baseline_version} |
-|---------|------------|------------------------|"
+| Version | Median | vs ${baseline_version} |
+|---------|--------|------------------------|"
 
 while IFS= read -r row; do
     version=$(echo "$row" | jq -r '.phparkitect_version')
@@ -46,7 +46,7 @@ while IFS= read -r row; do
     fi
 
     new_block+="
-| ${version} | ${median_rounded} | ${ratio} |"
+| ${version} | ${median_rounded}s | ${ratio} |"
 done < <(jq -c '[(.results[] | select(.phparkitect_version == "main")), (.results[] | select(.phparkitect_version != "main"))][]' "$latest")
 
 # Replace content between markers in README
@@ -63,8 +63,8 @@ akeneo_version=$(jq -r '.akeneo_version // "v2026.3"' "$latest")
 
 competitors_block="_Run: ${date} — Akeneo ${akeneo_version} — PHP ${php_version} — ${runs_per_version} runs per tool — one shared rule_
 
-| Tool | Version | Median (s) | Violations |
-|------|---------|------------|------------|"
+| Tool | Version | Median | Violations |
+|------|---------|--------|------------|"
 
 while IFS= read -r row; do
     tool=$(echo "$row" | jq -r '.tool')
@@ -74,7 +74,7 @@ while IFS= read -r row; do
     median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
     competitors_block+="
-| ${tool} | ${tool_version} | ${median_rounded} | ${violations} |"
+| ${tool} | ${tool_version} | ${median_rounded}s | ${violations} |"
 done < <(jq -c '.competitors[]' "$latest")
 
 awk -v block="$competitors_block" '

@@ -7,12 +7,12 @@ Benchmark comparing performance across phparkitect versions using the [Symfony](
 <!-- BENCHMARK_RESULTS_START -->
 _Run: 2026-08-02T11:21:18Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
 
-| Version | Median (s) | vs 1.3.0 |
-|---------|------------|------------------------|
-| main | 21.5 | +0.0% |
-| 1.3.0 | 21.5 | baseline |
-| 1.2.0 | 21.6 | +0.5% |
-| 1.1.1 | 21.8 | +1.4% |
+| Version | Median | vs 1.3.0 |
+|---------|--------|------------------------|
+| main | 21.5s | +0.0% |
+| 1.3.0 | 21.5s | baseline |
+| 1.2.0 | 21.6s | +0.5% |
+| 1.1.1 | 21.8s | +1.4% |
 <!-- BENCHMARK_RESULTS_END -->
 
 Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 29.5s across runs. The ratio column cancels most of that, since every version in a run is timed on the same machine, but it still carries a noise floor of roughly ±3 percentage points — a single run showing main a few percent slower is not evidence of a regression, only a trend across several runs is.
@@ -24,11 +24,11 @@ A separate run measures phparkitect against other architecture-testing tools on 
 <!-- COMPETITORS_RESULTS_START -->
 _Run: 2026-08-02T11:21:18Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
 
-| Tool | Version | Median (s) | Violations |
-|------|---------|------------|------------|
-| phparkitect | 1.3.0 | 5.7 | 14 |
-| deptrac | 4.7.1 | 7.5 | 32 |
-| phpat | 0.11.10 | 43.1 | 20 |
+| Tool | Version | Median | Violations |
+|------|---------|--------|------------|
+| phparkitect | 1.3.0 | 5.7s | 14 |
+| deptrac | 4.7.1 | 7.5s | 32 |
+| phpat | 0.11.10 | 43.1s | 20 |
 <!-- COMPETITORS_RESULTS_END -->
 
 Each tool's violation count is asserted before it is timed — a tool that runs no rules at all would otherwise look fast. See [competitors/README.md](competitors/README.md) for the rule equivalence, the rules that have no counterpart in every tool, and why phpat and Pest arch are not in the table yet.
