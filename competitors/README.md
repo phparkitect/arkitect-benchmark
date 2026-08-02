@@ -28,8 +28,10 @@ per-tool violation counts, and why they legitimately differ.
 Both competitors cache, and phparkitect does not, so both are made to run cold or the
 comparison would time a warm tool against a cold one:
 
-- **deptrac** runs with `--no-cache`. Measured, its cache is currently worth about 1% —
-  within noise — but the flag keeps the comparison from drifting if that changes.
+- **deptrac** runs with `--no-cache`. Its cache is worth a great deal on this subject —
+  6.8s down to 1.7s — so the flag is what makes the cold column mean anything. (On the
+  previous Symfony subject the same cache measured worth about 1%, because deptrac does
+  not persist it when the run hits parse errors, and Symfony's fixtures guarantee some.)
 - **phpat** runs with PHPStan's result cache cleared before *every* repetition. This one
   is not cosmetic: PHPStan's cache does not know phpat's rules live outside the analysed
   paths, so a stale cache silently reports **zero** violations for a rule that changed.

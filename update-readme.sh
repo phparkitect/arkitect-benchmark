@@ -63,8 +63,8 @@ akeneo_version=$(jq -r '.akeneo_version // "v2026.3"' "$latest")
 
 competitors_block="_Run: ${date} — Akeneo ${akeneo_version} — PHP ${php_version} — ${runs_per_version} runs per tool — one shared rule_
 
-| Tool | Version | Median |
-|------|---------|--------|"
+| Tool | Version | Cold | Warm cache |
+|------|---------|------|------------|"
 
 while IFS= read -r row; do
     tool=$(echo "$row" | jq -r '.tool')
@@ -72,8 +72,15 @@ while IFS= read -r row; do
     median_s=$(echo "$row" | jq -r '.median_s | tonumber')
     median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
+    warm_s=$(echo "$row" | jq -r '.median_warm_s // "null"')
+    if [[ "$warm_s" == "null" ]]; then
+        warm="— *(no cache)*"
+    else
+        warm="$(awk "BEGIN {printf \"%.1f\", $warm_s}")s"
+    fi
+
     competitors_block+="
-| ${tool} | ${tool_version} | ${median_rounded}s |"
+| ${tool} | ${tool_version} | ${median_rounded}s | ${warm} |"
 done < <(jq -c '.competitors[]' "$latest")
 
 awk -v block="$competitors_block" '

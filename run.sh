@@ -271,7 +271,8 @@ benchmark_competitors() {
     assert_violations "phparkitect" "$(count_violations_phparkitect "$bin")" "$EXPECTED_PHPARKITECT"
     local stats
     stats=$(measure "phparkitect" "${bin} check --config=${CROSS_TOOL_CONFIG} >/dev/null 2>&1")
-    results+="{\"tool\":\"phparkitect\",\"version\":\"${ark_version}\",\"violations\":${EXPECTED_PHPARKITECT},${stats}}"
+    # No cross-process cache to warm, so there is no second figure to report.
+    results+="{\"tool\":\"phparkitect\",\"version\":\"${ark_version}\",\"violations\":${EXPECTED_PHPARKITECT},\"median_warm_s\":null,${stats}}"
 
     echo "" >&2
     echo "=== Cross-tool: deptrac ===" >&2
@@ -281,8 +282,12 @@ benchmark_competitors() {
     assert_violations "deptrac" "$(count_violations_deptrac)" "$EXPECTED_DEPTRAC"
     # --no-cache: deptrac persists a cache file between processes and phparkitect
     # does not, so without it every run after the first would be timed warm.
-    stats=$(measure "deptrac" "${DEPTRAC_DIR}/vendor/bin/deptrac analyse --config-file=${DEPTRAC_DIR}/depfile.yaml --no-cache --no-progress >/dev/null 2>&1")
-    results+=",{\"tool\":\"deptrac\",\"version\":\"${deptrac_version}\",\"violations\":${EXPECTED_DEPTRAC},${stats}}"
+    stats=$(measure "deptrac (cold)" "${DEPTRAC_DIR}/vendor/bin/deptrac analyse --config-file=${DEPTRAC_DIR}/depfile.yaml --no-cache --no-progress >/dev/null 2>&1")
+    # Warm: same command with its cache left in place, populated by the warmup run.
+    local warm
+    warm=$(measure "deptrac (warm)" "${DEPTRAC_DIR}/vendor/bin/deptrac analyse --config-file=${DEPTRAC_DIR}/depfile.yaml --no-progress >/dev/null 2>&1" \
+        | grep -oP '"median_s":"\K[^"]+')
+    results+=",{\"tool\":\"deptrac\",\"version\":\"${deptrac_version}\",\"violations\":${EXPECTED_DEPTRAC},\"median_warm_s\":\"${warm}\",${stats}}"
 
     echo "" >&2
     echo "=== Cross-tool: phpat ===" >&2
@@ -295,7 +300,11 @@ benchmark_competitors() {
     stats=$(measure "phpat" \
         "${PHPAT_DIR}/vendor/bin/phpstan analyse -c ${PHPAT_DIR}/phpstan.neon --no-progress --memory-limit=-1 >/dev/null 2>&1" \
         "${PHPAT_DIR}/vendor/bin/phpstan clear-result-cache -c ${PHPAT_DIR}/phpstan.neon >/dev/null 2>&1")
-    results+=",{\"tool\":\"phpat\",\"version\":\"${phpat_version}\",\"violations\":${EXPECTED_PHPAT},${stats}}"
+    # Warm: no clearing, so every repetition after the warmup reuses the cache.
+    warm=$(measure "phpat (warm)" \
+        "${PHPAT_DIR}/vendor/bin/phpstan analyse -c ${PHPAT_DIR}/phpstan.neon --no-progress --memory-limit=-1 >/dev/null 2>&1" \
+        | grep -oP '"median_s":"\K[^"]+')
+    results+=",{\"tool\":\"phpat\",\"version\":\"${phpat_version}\",\"violations\":${EXPECTED_PHPAT},\"median_warm_s\":\"${warm}\",${stats}}"
 
     printf '%s' "$results"
 }
