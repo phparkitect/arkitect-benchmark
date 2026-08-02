@@ -12,14 +12,14 @@ The two use different subjects, different rules and different configs. Their num
 phparkitect's three latest releases plus `main`, all timed on the same machine in the same run.
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-08-02T11:21:18Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
+_Run: 2026-08-02T11:59:02Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
 
 | Version | Median | vs 1.3.0 |
 |---------|--------|------------------------|
-| main | 21.5s | +0.0% |
-| 1.3.0 | 21.5s | baseline |
-| 1.2.0 | 21.6s | +0.5% |
-| 1.1.1 | 21.8s | +1.4% |
+| main | 27.1s | -0.4% |
+| 1.3.0 | 27.2s | baseline |
+| 1.2.0 | 27.1s | -0.4% |
+| 1.1.1 | 27.2s | +0.0% |
 <!-- BENCHMARK_RESULTS_END -->
 
 Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 29.5s across runs. The ratio column cancels most of that, since every version in a run is timed on the same machine, but it still carries a noise floor of roughly ±3 percentage points — a single run showing main a few percent slower is not evidence of a regression, only a trend across several runs is.
@@ -31,7 +31,13 @@ A separate run measures phparkitect against other architecture-testing tools on 
 The subject is an application rather than a framework monorepo on purpose. Frameworks ship classes that are valid only against one version of an optional dependency, which a reflection-based analyser cannot load at all.
 
 <!-- COMPETITORS_RESULTS_START -->
-_Filled in by the next CI run._
+_Run: 2026-08-02T11:59:02Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
+
+| Tool | Version | Cold | Warm cache |
+|------|---------|------|------------|
+| phparkitect | 1.3.0 | 7.3s | — *(no cache)* |
+| deptrac | 4.7.1 | 9.3s | 2.4s |
+| phpat | 0.11.10 | 46.7s | 2.2s |
 <!-- COMPETITORS_RESULTS_END -->
 
 Every tool is checked before it is timed: it must report the violations it is known to find on this codebase, or the run aborts rather than publish a figure. A tool that silently runs no rules at all would otherwise look very fast — which happened three separate times while this was being built.
