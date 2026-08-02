@@ -63,18 +63,17 @@ akeneo_version=$(jq -r '.akeneo_version // "v2026.3"' "$latest")
 
 competitors_block="_Run: ${date} — Akeneo ${akeneo_version} — PHP ${php_version} — ${runs_per_version} runs per tool — one shared rule_
 
-| Tool | Version | Median | Violations |
-|------|---------|--------|------------|"
+| Tool | Version | Median |
+|------|---------|--------|"
 
 while IFS= read -r row; do
     tool=$(echo "$row" | jq -r '.tool')
     tool_version=$(echo "$row" | jq -r '.version')
-    violations=$(echo "$row" | jq -r '.violations')
     median_s=$(echo "$row" | jq -r '.median_s | tonumber')
     median_rounded=$(awk "BEGIN {printf \"%.1f\", $median_s}")
 
     competitors_block+="
-| ${tool} | ${tool_version} | ${median_rounded}s | ${violations} |"
+| ${tool} | ${tool_version} | ${median_rounded}s |"
 done < <(jq -c '.competitors[]' "$latest")
 
 awk -v block="$competitors_block" '
