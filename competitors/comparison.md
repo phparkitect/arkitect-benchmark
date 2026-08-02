@@ -66,14 +66,34 @@ unresolvable parent class into a fatal *internal error* per file rather than a
 reportable one. One missing dev dependency looked like an endless tail of broken
 tests. Installing PHPUnit collapsed 38 blockers to 17.
 
-What remains after that is a bounded and legitimate list, of two kinds:
+What remains is 80 exclusions, and their distribution is the interesting part:
+only **31 are under `Tests/`**, while **49 are production code**.
 
-- **Fixtures Symfony deliberately keeps broken** to test its own error handling:
-  `ParentNotExists`, `BadParent`, `Symfony\Bug\NotExistClass`, `MissingClass`,
-  and an `Internal error: boo`. These classes are *meant* not to exist; no
-  install fixes them.
-- **Missing PHP extensions**: `Redis`, `RedisCluster`, `Relay\Relay` are C
-  extensions, not composer packages.
+The test-side ones are fixtures Symfony deliberately keeps broken to exercise its
+own error handling — `ParentNotExists`, `BadParent`, `Symfony\Bug\NotExistClass`,
+`MissingClass`, and an `Internal error: boo`. Those classes are *meant* not to
+exist.
+
+The production-side ones are all the same shape — **version-conditional shims**:
+
+```
+Bridge/PhpUnit/Legacy/CommandForV9.php      HttpClient/Internal/AmpResolverV4.php
+Bridge/Doctrine/Middleware/Debug/DBAL3/     Cache/Traits/RedisCluster6Proxy.php
+Connection.php, Statement.php               Cache/Traits/RelayProxy.php
+```
+
+Symfony ships classes that are only valid PHP against one specific major of an
+optional dependency: `CommandForV9` extends a PHPUnit 9 class, `DBAL3/Connection`
+a Doctrine DBAL 3 one, `RelayProxy` needs a C extension. Under any other
+combination they are syntactically fine but semantically invalid — and a
+reflection-based analyser that actually loads them gets a PHP fatal error, while
+an AST-based one never notices.
+
+This also rules out the obvious workaround. Symfony's own `psalm.xml` excludes
+every `Tests/` directory (Symfony uses Psalm, not PHPStan — there is no
+`phpstan.neon` in the repository), so excluding tests wholesale would be the
+conventional move. It would not help here: it removes 31 of 80 blockers and
+leaves the harder 49 untouched.
 
 Excluding those (with `excludePaths.analyseAndScan` — plain `excludePaths` is not
 enough, the files are still scanned for symbols) leaves **two blockers that
