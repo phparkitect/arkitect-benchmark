@@ -12,12 +12,12 @@ The two use different subjects, different rules and different configs. Their num
 phparkitect's five latest releases plus `main`, all timed on the same machine in the same run.
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-08-02T12:40:14Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
+_Run: 2026-08-14T01:49:15Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
 
 |  | main | 1.3.0 | 1.2.0 | 1.1.1 | 1.1.0 | 1.0.0 |
 |---|---|---|---|---|---|---|
-| **Median** | 28.2s | 28.5s | 28.4s | 28.8s | 28.9s | 28.8s |
-| **vs 1.3.0** | ≈ | baseline | ≈ | ≈ | ≈ | ≈ |
+| **Median** | 27.5s | 28.9s | 28.0s | 28.4s | 27.8s | 28.3s |
+| **vs 1.3.0** | -5% | baseline | -3% | ≈ | -4% | ≈ |
 
 _≈ means the difference is inside the ±3 percentage point run-to-run noise, i.e. no measurable difference._
 <!-- BENCHMARK_RESULTS_END -->
@@ -33,13 +33,13 @@ A separate run measures phparkitect against other architecture-testing tools on 
 The subject is an application rather than a framework monorepo on purpose. Frameworks ship classes that are valid only against one version of an optional dependency, which a reflection-based analyser cannot load at all.
 
 <!-- COMPETITORS_RESULTS_START -->
-_Run: 2026-08-02T12:40:14Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
+_Run: 2026-08-14T01:49:15Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
 
 | Tool | Version | Cold | Warm cache |
 |------|---------|------|------------|
 | phparkitect | 1.3.0 | 7.3s | — *(no cache)* |
 | deptrac | 4.7.1 | 9.2s | 2.4s |
-| phpat | 0.11.10 | 47.9s | 2.2s |
+| phpat | 0.11.10 | 48.9s | 2.2s |
 <!-- COMPETITORS_RESULTS_END -->
 
 Every tool is checked before it is timed: it must report the violations it is known to find on this codebase, or the run aborts rather than publish a figure. A tool that silently runs no rules at all would otherwise look very fast — which happened three separate times while this was being built.
