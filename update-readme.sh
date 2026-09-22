@@ -46,6 +46,8 @@ while IFS= read -r row; do
         # so many rounds agree on the direction that a coin flip would manage it
         # less than 5% of the time — 5 of 5, 7 of 8, 9 of 10. Unlike requiring
         # every round to agree, more rounds make this more sensitive, not less.
+        # Under 2% is never reported: rounds share their run's machine, and the
+        # same comparison moved by up to 2 points between runs.
         ratio=$(jq -r --arg v "$version" --arg b "$baseline_version" '
             def choose(n; k): reduce range(0; k) as $i (1; . * (n - $i) / ($i + 1));
             def tail(n; k): [range(k; n + 1) | choose(n; .)] | add / pow(2; n);
@@ -58,7 +60,7 @@ while IFS= read -r row; do
             | ([.[] | select(. < 0)] | length) as $down
             | ([$up, $down] | max) as $agree
             | ($median | fabs | round) as $pct
-            | if tail($n; $agree) >= 0.05 or $pct == 0 then "≈"
+            | if tail($n; $agree) >= 0.05 or ($median | fabs) < 2 then "≈"
               elif $median > 0 then "+\($pct)%"
               else "-\($pct)%" end' "$latest")
     fi
@@ -75,7 +77,7 @@ ${sep}
 ${row_median}
 ${row_ratio}
 
-_Difference from ${baseline_version}, measured round by round. ≈ means too few rounds agreed on the direction to call it a difference._"
+_Difference from ${baseline_version}, measured round by round. ≈ means no reproducible difference: under 2%, or too few rounds agreed on the direction._"
 
 # Replace content between markers in README
 awk -v block="$new_block" '

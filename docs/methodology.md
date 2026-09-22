@@ -22,7 +22,9 @@ Each round gives one difference from the baseline. The table shows the median of
 | 8 | 7 |
 | 10 | 9 |
 
-Otherwise the cell shows `≈`. More rounds tolerate more disagreement, so they detect smaller differences — at about 3 minutes of CI time per round.
+It also has to be at least 2%. Rounds in one run share that run's machine, so they can agree on a difference the next run does not reproduce. Over the first three interleaved runs (75 rounds), a single round differed from the baseline by a median of 1.2 points and by more than 3 points one time in ten, but the median for the same version moved by up to 2 points from one run to the next: 1.3.0 came out at −0.4%, +0.3% and −1.3%.
+
+Otherwise the cell shows `≈`. More rounds tolerate more disagreement, so they catch smaller differences within a run; the 2% floor stays, since more rounds do not remove the run's own offset. Each round costs about 3 minutes of CI time.
 
 ## What is timed
 

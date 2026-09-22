@@ -12,9 +12,9 @@ _Run: 2026-09-22T21:04:55Z — Symfony v7.2.0 — PHP 8.3.33 — 5 interleaved r
 |  | main | 1.3.1 | 1.3.0 | 1.2.0 | 1.1.1 | 1.1.0 |
 |---|---|---|---|---|---|---|
 | **Median** | 26.8s | 27.1s | 26.7s | 26.5s | 27.1s | 27.0s |
-| **vs 1.3.1** | ≈ | baseline | -1% | -2% | ≈ | ≈ |
+| **vs 1.3.1** | ≈ | baseline | ≈ | ≈ | ≈ | ≈ |
 
-_Difference from 1.3.1, measured round by round. ≈ means too few rounds agreed on the direction to call it a difference._
+_Difference from 1.3.1, measured round by round. ≈ means no reproducible difference: under 2%, or too few rounds agreed on the direction._
 <!-- BENCHMARK_RESULTS_END -->
 
 Read the second row. The seconds depend on which CI machine ran the job, while the round-by-round comparison cancels that out. One run is not evidence of a regression; a trend across several is, and every run's raw timings are kept in [`results/`](results/). [How it is measured, and why](docs/methodology.md).
