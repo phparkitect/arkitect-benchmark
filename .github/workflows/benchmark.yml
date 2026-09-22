@@ -57,6 +57,8 @@ jobs:
 
       - name: Run benchmark
         if: steps.sha_check.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bash run.sh
 
       - name: Update README
