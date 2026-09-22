@@ -5,6 +5,17 @@ on:
   schedule:
     # Every day at 00:00 UTC
     - cron: '0 0 * * *'
+  # A change to the benchmark itself. The results commits this workflow pushes
+  # do not trigger it: they carry [skip ci] and are pushed with GITHUB_TOKEN.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+
+# Runs share main as their push target, so they queue instead of racing.
+concurrency:
+  group: benchmark
+  cancel-in-progress: false
 
 jobs:
   benchmark:
@@ -24,14 +35,16 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" | jq -r '.sha')
           echo "current=$current" >> "$GITHUB_OUTPUT"
           stored=$(cat .phparkitect-sha 2>/dev/null || echo "")
-          if [[ "$current" == "$stored" ]]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          # Only the daily schedule waits for a new phparkitect commit; a manual
+          # run or a change to the benchmark always runs.
+          if [[ "${{ github.event_name }}" != "schedule" || "$current" != "$stored" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup PHP 8.3
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
@@ -39,19 +52,19 @@ jobs:
           coverage: none
 
       - name: Install hyperfine
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         run: sudo apt-get install -y hyperfine
 
       - name: Run benchmark
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         run: bash run.sh
 
       - name: Update README
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         run: bash update-readme.sh
 
       - name: Commit results
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         run: |
           echo "${{ steps.sha_check.outputs.current }}" > .phparkitect-sha
           git config user.name "github-actions[bot]"
@@ -62,7 +75,7 @@ jobs:
           git push
 
       - name: Upload results
-        if: steps.sha_check.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+        if: steps.sha_check.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results-${{ github.run_id }}

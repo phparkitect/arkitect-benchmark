@@ -43,4 +43,4 @@ RUNS=10 bash run.sh    # more rounds: slower, but detects smaller differences
 bash update-readme.sh  # renders the latest result into this README
 ```
 
-Runs daily on CI when `phparkitect/arkitect` main has new commits.
+Runs on CI daily when `phparkitect/arkitect` main has new commits, and on every push to this repository's main that changes more than Markdown.
