@@ -12,14 +12,14 @@ The two use different subjects, different rules and different configs. Their num
 phparkitect's five latest releases plus `main`, all timed on the same machine in the same run.
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-09-16T03:26:56Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per version_
+_Run: 2026-09-22T19:47:57Z — Symfony v7.2.0 — PHP 8.3.33 — 5 interleaved rounds_
 
-|  | main | 1.3.0 | 1.2.0 | 1.1.1 | 1.1.0 | 1.0.0 |
+|  | main | 1.3.1 | 1.3.0 | 1.2.0 | 1.1.1 | 1.1.0 |
 |---|---|---|---|---|---|---|
-| **Median** | 27.3s | 31.3s | 29.6s | 35.5s | 32.2s | 27.5s |
-| **vs 1.3.0** | -13% | baseline | -5% | +13% | ≈ | -12% |
+| **Median** | 29.9s | 29.7s | 29.4s | 29.6s | 30.6s | 30.0s |
+| **vs 1.3.1** | ≈ | baseline | ≈ | ≈ | ≈ | ≈ |
 
-_≈ means the difference is inside the ±3 percentage point run-to-run noise, i.e. no measurable difference._
+_≈ means the rounds disagreed on the direction — faster than 1.3.1 in some, slower in others — i.e. no measurable difference._
 <!-- BENCHMARK_RESULTS_END -->
 
 Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 35.5s across different runs, which is why the first row is only there for scale.
@@ -35,13 +35,13 @@ A separate run measures phparkitect against other architecture-testing tools on 
 The subject is an application rather than a framework monorepo on purpose. Frameworks ship classes that are valid only against one version of an optional dependency, which a reflection-based analyser cannot load at all.
 
 <!-- COMPETITORS_RESULTS_START -->
-_Run: 2026-09-16T03:26:56Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
+_Run: 2026-09-22T19:47:57Z — Akeneo v2026.3 — PHP 8.3.33 — 5 runs per tool — one shared rule_
 
 | Tool | Version | Cold | Warm cache |
 |------|---------|------|------------|
-| phparkitect | 1.3.0 | 7.5s | — *(no cache)* |
-| deptrac | 4.7.2 | 10.7s | 2.7s |
-| phpat | 0.11.10 | 35.4s | 2.7s |
+| phparkitect | 1.3.1 | 7.5s | — *(no cache)* |
+| deptrac | 4.7.2 | 9.5s | 2.7s |
+| phpat | 0.11.10 | 38.1s | 2.7s |
 <!-- COMPETITORS_RESULTS_END -->
 
 Every tool is checked before it is timed: it must report the violations it is known to find on this codebase, or the run aborts rather than publish a figure. A tool that silently runs no rules at all would otherwise look very fast — which happened three separate times while this was being built.
