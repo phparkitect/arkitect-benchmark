@@ -56,7 +56,7 @@ jobs:
           echo "${{ steps.sha_check.outputs.current }}" > .phparkitect-sha
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add README.md .phparkitect-sha
+          git add README.md .phparkitect-sha results/
           git diff --cached --quiet || git commit -m "chore: update benchmark results [skip ci]"
           git pull --rebase
           git push
