@@ -22,9 +22,11 @@ _Run: 2026-09-16T03:26:56Z — Symfony v7.2.0 — PHP 8.3.33 — 5 runs per vers
 _≈ means the difference is inside the ±3 percentage point run-to-run noise, i.e. no measurable difference._
 <!-- BENCHMARK_RESULTS_END -->
 
-Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 29.5s across different runs. Comparing versions against a baseline measured on the same machine cancels most of that, which is why the second row exists and the first is only there for scale.
+Compare figures within a single run only. Absolute seconds reflect whichever CI machine ran the benchmark: an unchanged release has been measured anywhere between 21.8s and 35.5s across different runs, which is why the first row is only there for scale.
 
-Even that comparison has a floor: across 29 runs the same figure scattered by about ±3 percentage points, so anything smaller is reported as `≈` rather than as a number. A single run is never evidence of a regression; a trend across several is.
+The second row is what to read, and how it is measured matters more than how often. A shared CI machine does not only differ from the next one, it also changes speed while the job runs. Timing each version's repetitions back to back handed that drift to whichever version was running at the time: across five runs, the unchanged 1.0.0 release came out anywhere from 12% faster to 8% slower than 1.3.0. So the versions are now timed in interleaved rounds — every round runs each version once, in a fresh random order — and compared with the baseline round by round, where both timings came from the same few minutes on the same machine. The median of those per-round differences is reported only when every round agrees on the direction; otherwise it is `≈`.
+
+A single run is still never evidence of a regression; a trend across several is. The raw timings of every run are kept in [`results/`](results/), so a trend can be checked rather than remembered.
 
 ## Compared to other tools
 
@@ -51,7 +53,7 @@ The violation counts are not shown, because they would mislead. All three tools 
 ## How it works
 
 1. Clones `symfony/symfony` and `akeneo/pim-community-dev`, both at a pinned tag. Akeneo also gets its `vendor/` installed, because phpat resolves dependencies through reflection and needs the analysed project's autoloader.
-2. Fetches the 3 latest stable phparkitect releases plus `main`, and runs each over Symfony N times.
+2. Fetches the 5 latest stable phparkitect releases plus `main`, and times them over Symfony in N interleaved rounds, each running every version once in a random order.
 3. Runs phparkitect, deptrac and phpat over Akeneo on one shared rule, cold and with a warm cache, asserting each tool's violation count before timing it.
 
 Results are updated automatically every day when new commits are pushed to `phparkitect/arkitect` main.
@@ -60,5 +62,6 @@ Results are updated automatically every day when new commits are pushed to `phpa
 
 ```bash
 bash run.sh            # run benchmark, writes results/<timestamp>.json
+RUNS=10 bash run.sh    # more rounds: slower, but fewer ≈ from a noisy machine
 bash update-readme.sh  # update this README with the latest results
 ```

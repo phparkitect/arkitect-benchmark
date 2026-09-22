@@ -21,10 +21,9 @@ runs_per_version=$(jq -r '.runs_per_version' "$latest")
 
 # Baseline = latest stable release (first non-main result)
 baseline_version=$(jq -r '[.results[] | select(.phparkitect_version != "main")] | .[0].phparkitect_version' "$latest")
-baseline_median=$(jq -r '[.results[] | select(.phparkitect_version != "main")] | .[0].median_s | tonumber' "$latest")
 
 # Build the markdown block
-new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} runs per version_
+new_block="_Run: ${date} — Symfony ${symfony_version} — PHP ${php_version} — ${runs_per_version} interleaved rounds_
 "
 
 # Transposed: versions as columns, so more of them fit on one screen.
@@ -41,14 +40,20 @@ while IFS= read -r row; do
     if [[ "$version" == "$baseline_version" ]]; then
         ratio="baseline"
     else
-        # Rounded to whole percent, and anything inside the measured run-to-run
-        # noise floor is reported as no difference rather than as a small one.
-        ratio=$(awk "BEGIN {
-            diff = ($median_s - $baseline_median) / $baseline_median * 100
-            if (diff < 0) adiff = -diff; else adiff = diff
-            if (adiff < 3) { printf \"≈\" }
-            else { sign = (diff >= 0) ? \"+\" : \"-\"; printf \"%s%.0f%%\", sign, adiff }
-        }")
+        # Compared round by round: both timings of a round were taken minutes
+        # apart on the same machine, so its drift cancels out. The median of those
+        # differences is reported only if every round agrees on the direction;
+        # otherwise the machine moved more than the versions differ.
+        ratio=$(jq -r --arg v "$version" --arg b "$baseline_version" '
+            (.results[] | select(.phparkitect_version == $v) | .runs_ms) as $t
+            | (.results[] | select(.phparkitect_version == $b) | .runs_ms) as $base
+            | [range(0; $t | length) | ($t[.] / $base[.] - 1) * 100] | sort
+            | (length) as $n
+            | (if $n % 2 == 1 then .[($n - 1) / 2] else (.[$n / 2 - 1] + .[$n / 2]) / 2 end) as $median
+            | ($median | fabs | round) as $pct
+            | if (.[0] < 0 and .[-1] > 0) or $pct == 0 then "≈"
+              elif $median > 0 then "+\($pct)%"
+              else "-\($pct)%" end' "$latest")
     fi
 
     header+=" ${version} |"
@@ -63,7 +68,7 @@ ${sep}
 ${row_median}
 ${row_ratio}
 
-_≈ means the difference is inside the ±3 percentage point run-to-run noise, i.e. no measurable difference._"
+_≈ means the rounds disagreed on the direction — faster than ${baseline_version} in some, slower in others — i.e. no measurable difference._"
 
 # Replace content between markers in README
 awk -v block="$new_block" '
