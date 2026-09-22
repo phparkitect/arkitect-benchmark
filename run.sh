@@ -82,9 +82,13 @@ clone_akeneo() {
 }
 
 # ─── Fetch latest 5 stable releases ──────────────────────────────────────────
+# Anonymous API calls share a 60/hour limit per IP, and CI runners share IPs:
+# authenticate when a token is available.
 fetch_releases() {
     echo "→ Fetching latest phparkitect releases..." >&2
-    curl -sf "${GITHUB_API}?per_page=10" \
+    local auth=()
+    [[ -n "${GITHUB_TOKEN:-}" ]] && auth=(-H "Authorization: Bearer ${GITHUB_TOKEN}")
+    curl -sSf "${auth[@]}" "${GITHUB_API}?per_page=10" \
         | jq -r '[.[] | select(.prerelease == false and .draft == false) | .tag_name] | .[0:5] | .[]'
 }
 
@@ -363,6 +367,11 @@ main() {
     clone_akeneo
 
     mapfile -t releases < <(fetch_releases)
+    # Without releases there is no baseline to compare against.
+    if [[ ${#releases[@]} -eq 0 ]]; then
+        echo "ERROR: Could not fetch phparkitect releases from ${GITHUB_API}." >&2
+        exit 1
+    fi
     echo "→ Found releases: ${releases[*]}"
 
     local versions=("${releases[@]}" "main")
