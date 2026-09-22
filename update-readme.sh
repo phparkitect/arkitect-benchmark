@@ -41,17 +41,24 @@ while IFS= read -r row; do
         ratio="baseline"
     else
         # Compared round by round: both timings of a round were taken minutes
-        # apart on the same machine, so its drift cancels out. The median of those
-        # differences is reported only if every round agrees on the direction;
-        # otherwise the machine moved more than the versions differ.
+        # apart on the same machine, so its drift cancels out. A sign test on
+        # those differences decides whether there is one: it is reported only if
+        # so many rounds agree on the direction that a coin flip would manage it
+        # less than 5% of the time — 5 of 5, 7 of 8, 9 of 10. Unlike requiring
+        # every round to agree, more rounds make this more sensitive, not less.
         ratio=$(jq -r --arg v "$version" --arg b "$baseline_version" '
+            def choose(n; k): reduce range(0; k) as $i (1; . * (n - $i) / ($i + 1));
+            def tail(n; k): [range(k; n + 1) | choose(n; .)] | add / pow(2; n);
             (.results[] | select(.phparkitect_version == $v) | .runs_ms) as $t
             | (.results[] | select(.phparkitect_version == $b) | .runs_ms) as $base
             | [range(0; $t | length) | ($t[.] / $base[.] - 1) * 100] | sort
             | (length) as $n
             | (if $n % 2 == 1 then .[($n - 1) / 2] else (.[$n / 2 - 1] + .[$n / 2]) / 2 end) as $median
+            | ([.[] | select(. > 0)] | length) as $up
+            | ([.[] | select(. < 0)] | length) as $down
+            | ([$up, $down] | max) as $agree
             | ($median | fabs | round) as $pct
-            | if (.[0] < 0 and .[-1] > 0) or $pct == 0 then "≈"
+            | if tail($n; $agree) >= 0.05 or $pct == 0 then "≈"
               elif $median > 0 then "+\($pct)%"
               else "-\($pct)%" end' "$latest")
     fi
@@ -68,7 +75,7 @@ ${sep}
 ${row_median}
 ${row_ratio}
 
-_≈ means the rounds disagreed on the direction — faster than ${baseline_version} in some, slower in others — i.e. no measurable difference._"
+_Difference from ${baseline_version}, measured round by round. ≈ means too few rounds agreed on the direction to call it a difference._"
 
 # Replace content between markers in README
 awk -v block="$new_block" '
