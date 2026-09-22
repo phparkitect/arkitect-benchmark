@@ -1,0 +1,10 @@
+{
+  "date": "2026-09-22T21:04:55Z",
+  "symfony_version": "v7.2.0",
+  "akeneo_version": "v2026.3",
+  "php_version": "8.3.33",
+  "runs_per_version": 5,
+  "method": "interleaved",
+  "rounds_order":[["main","1.1.0","1.2.0","1.3.0","1.3.1","1.1.1"],["1.1.1","1.1.0","main","1.3.1","1.2.0","1.3.0"],["main","1.3.1","1.2.0","1.1.0","1.1.1","1.3.0"],["1.3.1","main","1.2.0","1.1.1","1.1.0","1.3.0"],["1.1.0","main","1.1.1","1.3.0","1.2.0","1.3.1"]],"results":[{"phparkitect_version":"1.3.1","runs_ms":[27295,27119,27287,26861,26909],"min_ms":26861,"max_ms":27295,"median_ms":27119,"median_s":"27.1"},{"phparkitect_version":"1.3.0","runs_ms":[26937,26917,26683,26454,26618],"min_ms":26454,"max_ms":26937,"median_ms":26683,"median_s":"26.7"},{"phparkitect_version":"1.2.0","runs_ms":[27197,26585,26520,26264,26496],"min_ms":26264,"max_ms":27197,"median_ms":26520,"median_s":"26.5"},{"phparkitect_version":"1.1.1","runs_ms":[26973,27194,27150,26855,27097],"min_ms":26855,"max_ms":27194,"median_ms":27097,"median_s":"27.1"},{"phparkitect_version":"1.1.0","runs_ms":[27618,27395,26937,27031,26863],"min_ms":26863,"max_ms":27618,"median_ms":27031,"median_s":"27"},{"phparkitect_version":"main","runs_ms":[27526,26786,27370,26793,26751],"min_ms":26751,"max_ms":27526,"median_ms":26793,"median_s":"26.8"}],
+  "competitors": [{"tool":"phparkitect","version":"1.3.1","violations":14,"median_warm_s":null,"runs_ms":[7225,7248,7181,7166,7201],"min_ms":7166,"max_ms":7248,"median_ms":7200,"median_s":"7.2","spread_s":"0.03"},{"tool":"deptrac","version":"4.7.2","violations":32,"median_warm_s":"2.4","runs_ms":[9047,9102,9002,9009,8974],"min_ms":8974,"max_ms":9101,"median_ms":9009,"median_s":"9.0","spread_s":"0.05"},{"tool":"phpat","version":"0.11.10","violations":20,"median_warm_s":"2.6","runs_ms":[35237,35156,35200,35075,35095],"min_ms":35074,"max_ms":35236,"median_ms":35155,"median_s":"35.2","spread_s":"0.07"}]
+}
