@@ -6,10 +6,9 @@ SYMFONY_VERSION="v7.2.0"
 SYMFONY_DIR="./symfony"
 VERSIONS_DIR="./phparkitect-versions"
 RESULTS_DIR="./results"
-# Rounds per version. The version history interleaves them — every round runs
-# each version once, in a shuffled order — so a CI machine that slows down
-# halfway through slows down every version, instead of whichever one happened
-# to be running at the time.
+# Run-to-run noise between CI machines (σ ≈ 6%) dwarfs the noise between
+# repetitions on one machine (σ ≈ 1%), so repetitions past a handful buy
+# precision the result cannot keep.
 RUNS="${RUNS:-5}"
 GITHUB_API="https://api.github.com/repos/phparkitect/arkitect/releases"
 ARKITECT_CONFIG="$(pwd)/arkitect.php"
@@ -175,62 +174,18 @@ measure() {
         "$min_ms" "$max_ms" "$median_ms" "$median_s" "$stddev_s"
 }
 
-# ─── Version history: interleaved rounds ─────────────────────────────────────
-# Timing each version's repetitions back to back attributed the CI machine's
-# drift to the versions: unchanged releases moved by up to 20 points against the
-# baseline between runs. Here every round times every version once, in a fresh
-# random order, and the versions are compared round by round.
-time_once_ms() {
-    local start end
-    start=$(date +%s%N)
-    # phparkitect exits non-zero when it finds violations; that is still a run.
-    bash -c "$1" >/dev/null 2>&1 || true
-    end=$(date +%s%N)
-    echo $(( (end - start) / 1000000 ))
-}
-
-benchmark_versions() {
-    local versions=("$@")
-    local -A commands times
-    local version round ms
+# ─── Run benchmark for one version ───────────────────────────────────────────
+benchmark_version() {
+    local version="$1"
+    local dir="${VERSIONS_DIR}/${version}"
+    local phparkitect_bin="${dir}/vendor/bin/phparkitect"
 
     export BENCHMARK_SRC_DIR="${SYMFONY_DIR}/src"
 
-    for version in "${versions[@]}"; do
-        commands[$version]="${VERSIONS_DIR}/${version}/vendor/bin/phparkitect check --config=${ARKITECT_CONFIG}"
-        times[$version]=""
-    done
+    local stats
+    stats=$(measure "$version" "${phparkitect_bin} check --config=${ARKITECT_CONFIG} >/dev/null 2>&1")
 
-    echo "  → Warmup: one untimed run per version..." >&2
-    for version in "${versions[@]}"; do
-        time_once_ms "${commands[$version]}" >/dev/null
-    done
-
-    local orders=""
-    for (( round = 1; round <= RUNS; round++ )); do
-        local order
-        mapfile -t order < <(printf '%s\n' "${versions[@]}" | shuf)
-        echo "  → Round ${round}/${RUNS}: ${order[*]}" >&2
-        for version in "${order[@]}"; do
-            ms=$(time_once_ms "${commands[$version]}")
-            times[$version]+="${times[$version]:+,}${ms}"
-        done
-        orders+="${orders:+,}$(printf '%s\n' "${order[@]}" | jq -R . | jq -sc .)"
-    done
-
-    # runs_ms[i] of every version comes from the same round i, so they pair up.
-    local sep=""
-    printf '"rounds_order":[%s],"results":[' "$orders"
-    for version in "${versions[@]}"; do
-        printf '%s%s' "$sep" "$(jq -nc --arg v "$version" --argjson t "[${times[$version]}]" '
-            ($t | sort) as $s
-            | ($s | length) as $n
-            | (if $n % 2 == 1 then $s[($n - 1) / 2] else ($s[$n / 2 - 1] + $s[$n / 2]) / 2 end) as $median
-            | {phparkitect_version: $v, runs_ms: $t, min_ms: $s[0], max_ms: $s[-1],
-               median_ms: ($median | floor), median_s: (($median / 100 | round) / 10 | tostring)}')"
-        sep=","
-    done
-    printf ']'
+    printf '{"phparkitect_version":"%s",%s}' "$version" "$stats"
 }
 
 # ─── Correctness guard ───────────────────────────────────────────────────────
@@ -372,16 +327,18 @@ main() {
     php_version=$(php -r 'echo PHP_VERSION;')
     local result_file="${RESULTS_DIR}/$(date -u +"%Y%m%dT%H%M%SZ").json"
 
+    local results_json=""
+    local sep=""
+
     for version in "${versions[@]}"; do
         echo ""
-        echo "=== Setup: ${version} ==="
+        echo "=== Version: ${version} ==="
         setup_version "$version"
+        local fragment
+        fragment=$(benchmark_version "$version")
+        results_json+="${sep}${fragment}"
+        sep=","
     done
-
-    echo ""
-    echo "=== Version history: ${#versions[@]} versions, ${RUNS} interleaved rounds ==="
-    local history_json
-    history_json=$(benchmark_versions "${versions[@]}")
 
     local competitors_json
     competitors_json=$(benchmark_competitors "${releases[0]}")
@@ -393,8 +350,7 @@ main() {
   "akeneo_version": "${AKENEO_VERSION}",
   "php_version": "${php_version}",
   "runs_per_version": ${RUNS},
-  "method": "interleaved",
-  ${history_json},
+  "results": [${results_json}],
   "competitors": [${competitors_json}]
 }
 EOF
