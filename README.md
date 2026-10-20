@@ -7,12 +7,12 @@ Two benchmarks for [phparkitect](https://github.com/phparkitect/arkitect), with 
 Is phparkitect getting slower between releases? The five latest releases plus `main`, timed over the [Symfony](https://github.com/symfony/symfony) source in the same CI job.
 
 <!-- BENCHMARK_RESULTS_START -->
-_Run: 2026-09-30T04:05:49Z — Symfony v7.2.0 — PHP 8.3.35 — 5 interleaved rounds_
+_Run: 2026-10-20T03:30:39Z — Symfony v7.2.0 — PHP 8.3.35 — 5 interleaved rounds_
 
 |  | main | 1.3.1 | 1.3.0 | 1.2.0 | 1.1.1 | 1.1.0 |
 |---|---|---|---|---|---|---|
-| **Median** | 20.0s | 21.5s | 21.4s | 21.0s | 21.5s | 21.6s |
-| **vs 1.3.1** | -7% | baseline | ≈ | ≈ | ≈ | ≈ |
+| **Median** | 26.0s | 27.4s | 27.3s | 27.1s | 27.7s | 27.8s |
+| **vs 1.3.1** | -5% | baseline | ≈ | ≈ | ≈ | ≈ |
 
 _Difference from 1.3.1, measured round by round. ≈ means no reproducible difference: under 2%, or too few rounds agreed on the direction._
 <!-- BENCHMARK_RESULTS_END -->
@@ -24,13 +24,13 @@ Read the second row. The seconds depend on which CI machine ran the job, while t
 phparkitect against deptrac and phpat, on one shared rule — *classes in `Akeneo\*\Domain` must not depend on Symfony* — over [Akeneo PIM](https://github.com/akeneo/pim-community-dev).
 
 <!-- COMPETITORS_RESULTS_START -->
-_Run: 2026-09-30T04:05:49Z — Akeneo v2026.3 — PHP 8.3.35 — 5 runs per tool — one shared rule_
+_Run: 2026-10-20T03:30:39Z — Akeneo v2026.3 — PHP 8.3.35 — 5 runs per tool — one shared rule_
 
 | Tool | Version | Cold | Warm cache |
 |------|---------|------|------------|
-| phparkitect | 1.3.1 | 5.5s | — *(no cache)* |
-| deptrac | 4.7.2 | 6.9s | 2.3s |
-| phpat | 0.11.10 | 26.3s | 1.8s |
+| phparkitect | 1.3.1 | 7.2s | — *(no cache)* |
+| deptrac | 4.7.2 | 9.2s | 2.5s |
+| phpat | 0.11.10 | 21.9s | 1.5s |
 <!-- COMPETITORS_RESULTS_END -->
 
 Each tool must report the violations it is known to find before it is timed, or the run aborts. *Warm cache* only applies if the tool's cache survives between runs, which on CI it does not by default. Details on the subject, the rule and each tool in [competitors/](competitors/README.md).
